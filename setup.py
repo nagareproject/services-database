@@ -29,6 +29,7 @@ setup(
     keywords='',
     url='https://github.com/nagareproject/services-database',
     packages=find_packages(),
+    include_package_data=True,
     zip_safe=False,
     setup_requires=['setuptools_scm', 'pytest-runner'],
     use_scm_version=True,
