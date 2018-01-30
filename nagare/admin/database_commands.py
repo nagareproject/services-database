@@ -21,18 +21,18 @@ class Create(command.Command):
             help='drop the database tables before to re-create them'
         )
 
-    def run(self, database_service, application_service, drop=False):
-        app = application_service.create()
-
+    @staticmethod
+    def run(database_service, application_service, drop=False):
         if drop:
             database_service.drop_all()
 
         database_service.create_all()
-        database_service.populate_all(app)
+        database_service.populate_all(application_service.service)
 
 
 class Drop(command.Command):
     DESC = 'Drop the database tables of an application'
 
-    def run(self, database_service):
+    @staticmethod
+    def run(database_service):
         database_service.drop_all()
