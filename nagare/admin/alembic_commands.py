@@ -28,6 +28,8 @@ class Config(config.Config):
 
 
 class AlembicCommand(command.Command):
+    WITH_STARTED_SERVICES = True
+
     def _set_arguments(self, parser):
         pass
 

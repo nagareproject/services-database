@@ -12,6 +12,7 @@ from nagare.admin import command
 
 class Create(command.Command):
     DESC = 'Create the database tables of an application'
+    WITH_STARTED_SERVICES = True
 
     def set_arguments(self, parser):
         super(Create, self).set_arguments(parser)
@@ -32,6 +33,7 @@ class Create(command.Command):
 
 class Drop(command.Command):
     DESC = 'Drop the database tables of an application'
+    WITH_STARTED_SERVICES = True
 
     @staticmethod
     def run(database_service):

@@ -151,6 +151,9 @@ class Database(plugin.Plugin):
 
             self.metadatas.append(metadata)
 
+    def handle_interactive(self):
+        return {'session': session}
+
     def create_all(self):
         for metadata in self.metadatas:
             metadata.create_all()
