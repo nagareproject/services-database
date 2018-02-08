@@ -20,9 +20,6 @@ from sqlalchemy import orm
 orm.__dict__.setdefault('ScopedSession', orm.scoped_session)
 from elixir import setup_all, session  # noqa: E402
 
-# session.configure(autoflush=True, expire_on_commit=True, autocommit=True)
-# session.configure(twophase=True)
-zope.sqlalchemy.register(session)
 query = session.query
 
 # -----------------------------------------------------------------------------
@@ -103,14 +100,30 @@ def default_populate(app):
 
 class Database(plugin.Plugin):
     CONFIG_SPEC = {
+        'uri': 'string(default=None)',  # Database connection string
+        'debug': 'boolean(default=False)',  # Set the database engine in debug mode?
+
+        'session': 'string(default="elixir:session")',
+        'autoflush': 'boolean(default=True)',
+        'autocommit': 'boolean(default=False)',
+        'expire_on_commit': 'boolean(default=True)',
         'twophases': 'boolean(default=False)',
+
         '__many__': {  # Database sub-sections
             'activated': 'boolean(default=True)',
             'uri': 'string(default=None)',  # Database connection string
-            'metadata': 'string(default=None)',  # Database metadata: database entities description
+            'debug': 'boolean(default=False)',  # Set the database engine in debug mode?
+
+            'session': 'string(default=None)',
+            'autoflush': 'boolean(default=True)',
+            'autocommit': 'boolean(default=False)',
+            'expire_on_commit': 'boolean(default=True)',
+            'twophases': 'boolean(default=False)',
+
+            'metadata': 'string',  # Database metadata: database entities description
             'populate': 'string(default="nagare.services.database:default_populate")',
-            'debug': 'boolean(default=False)'  # Set the database engine in debug mode?
         },
+
         'upgrade': {
             'file_template': 'string(default=None)',
             'timezone': 'string(default=None)',
@@ -122,44 +135,71 @@ class Database(plugin.Plugin):
         }
     }
 
-    def __init__(self, name, dist, twophases, upgrade, **configs):
+    def __init__(
+            self,
+            name, dist,
+            uri, debug, upgrade,
+            **configs
+    ):
         super(Database, self).__init__(name, dist)
 
+        self.uri = uri
+        self.debug = debug
         self.alembic_config = {k: v for k, v in upgrade.items() if v is not None}
         self.configs = configs
-        self.metadatas = []
+
+        self.metadatas = {}
         self.populates = []
 
-        session.configure(twophase=twophases)
+    @staticmethod
+    def _configure_session(session, autoflush, autocommit, expire_on_commit, twophases, **config):
+        if session:
+            session = reference.load_object(session)[0]
+            session.configure(
+                autoflush=autoflush, autocommit=autocommit,
+                expire_on_commit=expire_on_commit,
+                twophase=twophases
+            )
 
-    def setup(self):
-        self.populates = [reference.load_object(config['populate'])[0] for config in self.configs.values()]
+            zope.sqlalchemy.register(session)
 
-        for config in self.configs.values():
-            self._bind(**config)
+        return config
+
+    @staticmethod
+    def _create_engine(uri, debug, **config):
+        return uri and sqlalchemy.engine_from_config(config, '', echo=debug, url=uri)
+
+    def _bind(self, name, default_engine, activated, uri, debug, metadata, populate, **engine_config):
+        if activated:
+            engine = self._create_engine(uri, debug, **engine_config) or default_engine
+            if engine is not None:
+                metadata = reference.load_object(metadata)[0]
+                metadata.bind = engine
+
+            self.metadatas[name] = metadata
+
+        return populate
+
+    def handle_start(self, app):
+        configs = self._configure_session(**self.configs)
+        engine_config = {k: configs.pop(k) for k, v in configs.items() if not isinstance(v, dict)}
+        configs = {name: self._configure_session(**config) for name, config in configs.items()}
+
+        engine = self._create_engine(self.uri, self.debug, **engine_config)
+
+        for name, config in configs.items():
+            populate = self._bind(name, engine, **config)
+            self.populates.append(reference.load_object(populate)[0])
 
         if self.metadatas:
             setup_all()
 
-    def handle_start(self, app):
-        self.setup()
-
-    def _bind(self, activated, uri, metadata, populate, debug, **engine_config):
-        if activated and uri and metadata:
-            metadata = reference.load_object(metadata)[0]
-            metadata.bind = sqlalchemy.engine_from_config(engine_config, '', echo=debug, url=uri)
-
-            self.metadatas.append(metadata)
-
-    def handle_interactive(self):
-        return {'session': session}
-
     def create_all(self):
-        for metadata in self.metadatas:
+        for metadata in self.metadatas.values():
             metadata.create_all()
 
     def drop_all(self):
-        for metadata in self.metadatas:
+        for metadata in self.metadatas.values():
             engine = metadata.bind
 
             alembic = MigrationContext.configure(url=engine.url)

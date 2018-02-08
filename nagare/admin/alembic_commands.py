@@ -27,7 +27,8 @@ class Config(config.Config):
         return os.path.join(here, '..', 'templates')
 
 
-class AlembicCommand(command.Command):
+class AlembicBaseCommand(command.Command):
+    ROOT = 'database_versions'
     WITH_STARTED_SERVICES = True
 
     def _set_arguments(self, parser):
@@ -35,17 +36,10 @@ class AlembicCommand(command.Command):
 
     def set_arguments(self, parser):
         self._set_arguments(parser)
-        super(AlembicCommand, self).set_arguments(parser)
+        super(AlembicBaseCommand, self).set_arguments(parser)
 
-    def run(self, database_service, **params):
-        metadatas = database_service.metadatas
-
-        cfg = Config(
-            script_location='database_versions',
-            metadata=metadatas,
-            engine=metadatas[0].bind,
-            **database_service.alembic_config
-        )
+    def run(self, database_service, config=None, **params):
+        cfg = Config(**dict(config or {}, **database_service.alembic_config))
 
         try:
             getattr(alembic_command, self.__class__.__name__.lower())(cfg, **params)
@@ -55,21 +49,54 @@ class AlembicCommand(command.Command):
             return 1
 
 
-class Init(AlembicCommand):
+class AlembicCommand(AlembicBaseCommand):
+
+    def _set_arguments(self, parser):
+        parser.add_argument('--db', help="Name of the db section")
+        super(AlembicCommand, self)._set_arguments(parser)
+
+    def run(self, database_service, db=None, **params):
+        metadatas = database_service.metadatas
+
+        if not db:
+            if len(metadatas) == 1:
+                db = next(iter(metadatas))
+            else:
+                raise ValueError('missing --db option')
+
+        metadata = metadatas[db]
+
+        return super(AlembicCommand, self).run(
+            database_service,
+            {
+                'script_location': os.path.join(self.ROOT, db),
+                'metadata': metadata,
+                'engine': metadata.bind,
+            },
+            **params
+        )
+
+
+class Init(AlembicBaseCommand):
     DESC = 'Initialize a new scripts directory'
 
-    def run(self, services_service):
-        try:
-            return services_service(
-                super(Init, self).run,
-                directory='database_versions',
-                template='alembic_nagare'
-            )
-        except UnboundLocalError as e:
-            if 'config_file' not in e.args[0]:
-                raise
+    def run(self, database_service, services_service):
+        os.mkdir(self.ROOT)
 
-            return 0
+        for name in database_service.metadatas:
+            try:
+                r = services_service(
+                    super(Init, self).run,
+                    directory=os.path.join(self.ROOT, name),
+                    template='alembic_nagare'
+                )
+                if r:
+                    return r
+            except UnboundLocalError as e:
+                if 'config_file' not in e.args[0]:
+                    raise
+
+        return 0
 
 
 class Stamp(AlembicCommand):
@@ -85,6 +112,7 @@ class Stamp(AlembicCommand):
             help='Arbitrary "tag" name. Can be used by custom env.py scripts'
         )
         parser.add_argument('revision')
+        super(Stamp, self)._set_arguments(parser)
 
 
 class Revision(AlembicCommand):
@@ -128,6 +156,7 @@ class Revision(AlembicCommand):
             '--depends-on', action='append',
             help='Specify one or more revision identifiers which this revision should depend on'
         )
+        super(Revision, self)._set_arguments(parser)
 
 
 class Upgrade(AlembicCommand):
@@ -143,6 +172,7 @@ class Upgrade(AlembicCommand):
             help='Arbitrary "tag" name. Can be used by custom env.py scripts'
         )
         parser.add_argument('revision')
+        super(Upgrade, self)._set_arguments(parser)
 
 
 class Downgrade(Upgrade):
@@ -157,6 +187,7 @@ class Current(AlembicCommand):
             '-v', '--verbose', action='store_true',
             help='Use more verbose output'
         )
+        super(Current, self)._set_arguments(parser)
 
 
 class History(AlembicCommand):
@@ -171,6 +202,7 @@ class History(AlembicCommand):
             '-v', '--verbose', action='store_true',
             help='Use more verbose output'
         )
+        super(History, self)._set_arguments(parser)
 
 
 class Branches(AlembicCommand):
@@ -181,6 +213,7 @@ class Branches(AlembicCommand):
             '-v', '--verbose', action='store_true',
             help='Use more verbose output'
         )
+        super(Branches, self)._set_arguments(parser)
 
 
 class Heads(AlembicCommand):
@@ -195,6 +228,7 @@ class Heads(AlembicCommand):
             '--resolve-dependencies', action='store_true',
             help='treat dependency version as down revisions'
         )
+        super(Heads, self)._set_arguments(parser)
 
 
 class Merge(AlembicCommand):
@@ -217,6 +251,7 @@ class Merge(AlembicCommand):
             'revisions', nargs='+',
             help='one or more revisions, or "heads" for all heads'
         )
+        super(Merge, self)._set_arguments(parser)
 
 
 class Show(AlembicCommand):
@@ -227,3 +262,4 @@ class Show(AlembicCommand):
             'rev',
             help='revision target'
         )
+        super(Show, self)._set_arguments(parser)
