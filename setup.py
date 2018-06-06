@@ -40,7 +40,7 @@ setup(
     tests_require=['pytest'],
     entry_points='''
         [nagare.commands]
-        db = nagare.commands:Commands
+        db = nagare.admin.command:Commands
 
         [nagare.commands.db]
         create = nagare.admin.database_commands:Create

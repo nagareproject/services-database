@@ -62,7 +62,7 @@ class AlembicCommand(AlembicBaseCommand):
             if len(metadatas) == 1:
                 db = next(iter(metadatas))
             else:
-                raise ValueError('missing --db option')
+                raise command.ArgumentError('missing --db option')
 
         metadata = metadatas[db]
 
