@@ -64,18 +64,6 @@ class FKRelationship(object):
 
         return target_rel_name, target_rel
 
-    def config_inverse(self, key, rel, target_rel_name, target_rel):
-        if isinstance(target_rel, FKRelationship):
-            target_rel.inverse = key
-        else:
-            target_rel.property._add_reverse_property(key)
-
-        if isinstance(rel, FKRelationship):
-            rel.inverse = target_rel_name
-
-        elif not isinstance(target_rel, FKRelationship):
-            rel._add_reverse_property(target_rel_name)
-
     def config(self, local_cls, key):
         target_cls = self.target_cls(local_cls)
         if target_cls is None:
@@ -97,9 +85,6 @@ class FKRelationship(object):
             **dict(relationship_kwargs, **self.relationship_kwargs)
         )
         setattr(local_cls, key, rel)
-
-        if target_rel is not None:
-            self.config_inverse(key, rel, target_rel_name, target_rel)
 
 
 class OneToMany(FKRelationship):
