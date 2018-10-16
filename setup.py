@@ -33,7 +33,7 @@ setup(
     setup_requires=['setuptools_scm'],
     use_scm_version=True,
     install_requires=[
-        'SQLAlchemy', 'Elixir', 'alembic', 'zope.sqlalchemy',
+        'SQLAlchemy', 'alembic', 'zope.sqlalchemy',
         'nagare-services-transaction', 'nagare-server'
     ],
     entry_points='''
