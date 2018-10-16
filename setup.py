@@ -29,15 +29,13 @@ setup(
     keywords='',
     url='https://github.com/nagareproject/services-database',
     packages=find_packages(),
-    include_package_data=True,
     zip_safe=False,
-    setup_requires=['setuptools_scm', 'pytest-runner'],
+    setup_requires=['setuptools_scm'],
     use_scm_version=True,
     install_requires=[
         'SQLAlchemy', 'Elixir', 'alembic', 'zope.sqlalchemy',
         'nagare-services-transaction', 'nagare-server'
     ],
-    tests_require=['pytest'],
     entry_points='''
         [nagare.commands]
         db = nagare.admin.command:Commands

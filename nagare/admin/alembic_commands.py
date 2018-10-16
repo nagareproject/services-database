@@ -8,7 +8,10 @@
 # --
 
 import os
-from ConfigParser import RawConfigParser
+try:
+    from ConfigParser import RawConfigParser
+except ImportError:
+    from configparser import RawConfigParser
 
 from nagare.admin import command
 from alembic import config, util, command as alembic_command
@@ -45,7 +48,7 @@ class AlembicBaseCommand(command.Command):
             getattr(alembic_command, self.__class__.__name__.lower())(cfg, **params)
             return 0
         except util.exc.CommandError as e:
-            print 'FAILED:', str(e)
+            print('FAILED:', str(e))
             return 1
 
 
