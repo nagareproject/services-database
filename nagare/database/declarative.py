@@ -86,6 +86,9 @@ class FKRelationship(object):
         )
         setattr(local_cls, key, rel)
 
+        if isinstance(target_rel, FKRelationship):
+            target_rel.inverse = key
+
 
 class OneToMany(FKRelationship):
     """Generates a one to many relationship"""
