@@ -9,4 +9,6 @@
 # this distribution.
 # --
 
-from .services.database import session  # noqa: F401
+from .pickle import NonSerializable  # noqa: F401
+from nagare.services.database import session, metadata  # noqa: F401
+from .declarative import Entity, Field, ManyToOne, OneToMany, ManyToMany, OneToOne  # noqa: F401
