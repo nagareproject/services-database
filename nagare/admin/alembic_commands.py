@@ -84,20 +84,23 @@ class Init(AlembicBaseCommand):
     DESC = 'Initialize a new scripts directory'
 
     def run(self, database_service, services_service):
-        os.mkdir(self.ROOT)
+        if os.path.exists(self.ROOT):
+            print("'%s' already exists" % self.ROOT)
+        else:
+            os.mkdir(self.ROOT)
 
-        for name in database_service.metadatas:
-            try:
-                r = services_service(
-                    super(Init, self).run,
-                    directory=os.path.join(self.ROOT, name),
-                    template='alembic_nagare'
-                )
-                if r:
-                    return r
-            except UnboundLocalError as e:
-                if 'config_file' not in e.args[0]:
-                    raise
+            for name in database_service.metadatas:
+                try:
+                    r = services_service(
+                        super(Init, self).run,
+                        directory=os.path.join(self.ROOT, name),
+                        template='alembic_nagare'
+                    )
+                    if r:
+                        return r
+                except UnboundLocalError as e:
+                    if 'config_file' not in e.args[0]:
+                        raise
 
         return 0
 

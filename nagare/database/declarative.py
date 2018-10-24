@@ -34,9 +34,11 @@ class FKRelationship(object):
                 (name, rel)
                 for name, rel in target_cls.__dict__.items()
                 if(
-                    isinstance(rel, FKRelationship) and
-                    (self.RELATIONSHIP_NAME in rel.INVERSE_RELATIONSHIP_NAME) and
-                    (rel.target_cls(target_cls) is local_cls)
+                    isinstance(rel, FKRelationship) and (
+                        self.RELATIONSHIP_NAME in rel.INVERSE_RELATIONSHIP_NAME
+                    ) and (
+                        rel.target_cls(target_cls) is local_cls
+                    )
                 )
             ]
 
