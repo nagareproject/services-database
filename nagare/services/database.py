@@ -57,7 +57,7 @@ class Database(plugin.Plugin):
         self.alembic_config = {k: v for k, v in upgrade.items() if v is not None}
         self.configs = configs
 
-        self.metadatas = set()
+        self.metadatas = {}
         self.populates = []
 
     @staticmethod
@@ -73,32 +73,32 @@ class Database(plugin.Plugin):
 
         return engine_config
 
-    def _configure_engine(self, uri, debug, metadata, populate, **config):
+    def _configure_engine(self, name, uri, debug, metadata, populate, **config):
         engine = engine_from_config(config, '', echo=debug, url=uri)
 
         metadata = reference.load_object(metadata)[0]
         metadata.bind = engine
 
-        self.metadatas.add(metadata)
+        self.metadatas[name] = metadata
 
         return populate
 
     def handle_start(self, app):
-        for config in self.configs.values():
+        for name, config in self.configs.items():
             if config.pop('activated'):
                 engine_config = self._configure_session(**config)
-                populate = self._configure_engine(**engine_config)
+                populate = self._configure_engine(name, **engine_config)
 
                 self.populates.append(reference.load_object(populate)[0])
 
         orm.configure_mappers()
 
     def create_all(self):
-        for metadata in self.metadatas:
+        for metadata in self.metadatas.values():
             metadata.create_all()
 
     def drop_all(self):
-        for metadata in self.metadatas:
+        for metadata in self.metadatas.values():
             engine = metadata.bind
 
             alembic = MigrationContext.configure(url=engine.url)
