@@ -170,10 +170,10 @@ class ManyToMany(FKRelationship):
         tablename = self.tablename
 
         if not tablename:
-            source_part = (local_cls.__name__ + '_' + key).lower()
-            target_part = (target_cls.__name__ + ('_' + self.inverse if self.inverse else '')).lower()
+            source_part = (local_cls.__name__ + ('_' + target_rel_name if target_rel_name else '')).lower()
+            target_part = (target_cls.__name__ + '_' + key).lower()
 
-            if self.inverse and (source_part < target_part):
+            if target_rel_name and (source_part < target_part):
                 tablename = (target_part, source_part)
             else:
                 tablename = (source_part, target_part)
