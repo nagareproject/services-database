@@ -93,8 +93,8 @@ def test3():
     child1 = Child2_2(name='manytoone_test3_1')
     child2 = Child2_2(name='manytoone_test3_2')
     parent = Parent2_2(name='manytoone_test3')
-    parent.children.add(child1)
-    parent.children.add(child2)
+    parent.children.append(child1)
+    parent.children.append(child2)
 
     session.commit()
 
@@ -120,8 +120,8 @@ def test5():
     child1 = Child2_3(name='manytoone_test5_1')
     child2 = Child2_3(name='manytoone_test5_2')
     parent = Parent2_3(name='manytoone_test5')
-    parent.children.add(child1)
-    parent.children.add(child2)
+    parent.children.append(child1)
+    parent.children.append(child2)
 
     session.commit()
 
@@ -147,8 +147,8 @@ def test7():
     child1 = Child2_4(name='manytoone_test7_1')
     child2 = Child2_4(name='manytoone_test7_2')
     parent = Parent2_4(name='manytoone_test7')
-    parent.children.add(child1)
-    parent.children.add(child2)
+    parent.children.append(child1)
+    parent.children.append(child2)
 
     session.commit()
 

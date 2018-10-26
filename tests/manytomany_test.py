@@ -64,11 +64,11 @@ metadata.create_all()
 def test1():
     tag1 = Tag3_1(name='manytomany_test1_1')
     tag2 = Tag3_1(name='manytomany_test1_2')
-    movie1 = Movie3_1(name='manytomany_test1_1', tags={tag1})
+    movie1 = Movie3_1(name='manytomany_test1_1', tags=[tag1])
     movie2 = Movie3_1(name='manytomany_test1_2')
 
-    movie2.tags = {tag1}
-    movie2.tags.add(tag2)
+    movie2.tags = [tag1]
+    movie2.tags.append(tag2)
 
     session.commit()
 
@@ -85,11 +85,11 @@ def test1():
 def test2():
     tag1 = Tag3_2(name='manytomany_test2_1')
     tag2 = Tag3_2(name='manytomany_test2_2')
-    movie1 = Movie3_2(name='manytomany_test2_1', tags={tag1})
+    movie1 = Movie3_2(name='manytomany_test2_1', tags=[tag1])
     movie2 = Movie3_2(name='manytomany_test2_2')
 
-    movie2.tags = {tag1}
-    movie2.tags.add(tag2)
+    movie2.tags = [tag1]
+    movie2.tags.append(tag2)
 
     session.commit()
 
@@ -103,11 +103,11 @@ def test2():
 def test3():
     movie1 = Movie3_2(name='manytomany_test3_1')
     movie2 = Movie3_2(name='manytomany_test3_2')
-    tag1 = Tag3_2(name='manytomany_test3_1', movies={movie1})
+    tag1 = Tag3_2(name='manytomany_test3_1', movies=[movie1])
     tag2 = Tag3_2(name='manytomany_test3_2')
 
-    tag1.movies.add(movie2)
-    tag2.movies = {movie2}
+    tag1.movies.append(movie2)
+    tag2.movies = [movie2]
 
     session.commit()
 
@@ -121,11 +121,11 @@ def test3():
 def test4():
     movie1 = Movie3_2(name='manytomany_test4_1')
     movie2 = Movie3_2(name='manytomany_test4_2')
-    tag1 = Tag3_2(name='manytomany_test4_1', movies={movie1})
+    tag1 = Tag3_2(name='manytomany_test4_1', movies=[movie1])
     tag2 = Tag3_2(name='manytomany_test4_2')
 
-    tag1.movies.add(movie2)
-    tag2.movies = {movie2}
+    tag1.movies.append(movie2)
+    tag2.movies = [movie2]
 
     session.commit()
 
@@ -139,11 +139,11 @@ def test4():
 def test5():
     movie1 = Movie3_2(name='manytomany_test5_1')
     movie2 = Movie3_2(name='manytomany_test5_2')
-    tag1 = Tag3_2(name='manytomany_test5_1', movies={movie1})
+    tag1 = Tag3_2(name='manytomany_test5_1', movies=[movie1])
     tag2 = Tag3_2(name='manytomany_test5_2')
 
-    tag1.movies.add(movie2)
-    tag2.movies = {movie2}
+    tag1.movies.append(movie2)
+    tag2.movies = [movie2]
 
     session.commit()
 

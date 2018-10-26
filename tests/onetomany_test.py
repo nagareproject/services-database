@@ -64,7 +64,7 @@ metadata.create_all()
 def test1():
     child1 = Child1_1(name='onetomany_test1_1')
     child2 = Child1_1(name='onetomany_test1_2')
-    parent = Parent1_1(name='onetomany_test1', children={child1, child2})
+    parent = Parent1_1(name='onetomany_test1', children=[child1, child2])
 
     session.commit()
 
@@ -78,8 +78,8 @@ def test2():
     child1 = Child1_1(name='onetomany_test2_1')
     child2 = Child1_1(name='onetomany_test2_2')
     parent = Parent1_1(name='onetomany_test2')
-    parent.children.add(child1)
-    parent.children.add(child2)
+    parent.children.append(child1)
+    parent.children.append(child2)
 
     session.commit()
 
@@ -92,7 +92,7 @@ def test2():
 def test3():
     child1 = Child1_2(name='onetomany_test3_1')
     child2 = Child1_2(name='onetomany_test3_2')
-    parent = Parent1_2(name='onetomany_test3', children={child1, child2})
+    parent = Parent1_2(name='onetomany_test3', children=[child1, child2])
 
     session.commit()
 
@@ -105,8 +105,8 @@ def test4():
     child1 = Child1_2(name='onetomany_test4_1')
     child2 = Child1_2(name='onetomany_test4_2')
     parent = Parent1_2(name='onetomany_test4')
-    parent.children.add(child1)
-    parent.children.add(child2)
+    parent.children.append(child1)
+    parent.children.append(child2)
 
     session.commit()
 
@@ -131,7 +131,7 @@ def test5():
 def test6():
     child1 = Child1_3(name='onetomany_test6_1')
     child2 = Child1_3(name='onetomany_test6_2')
-    parent = Parent1_3(name='onetomany_test6', children={child1, child2})
+    parent = Parent1_3(name='onetomany_test6', children=[child1, child2])
 
     session.commit()
 
@@ -144,8 +144,8 @@ def test7():
     child1 = Child1_3(name='onetomany_test7_1')
     child2 = Child1_3(name='onetomany_test7_2')
     parent = Parent1_3(name='onetomany_test7')
-    parent.children.add(child1)
-    parent.children.add(child2)
+    parent.children.append(child1)
+    parent.children.append(child2)
 
     session.commit()
 
@@ -170,7 +170,7 @@ def test8():
 def test9():
     child1 = Child1_4(name='onetomany_test9_1')
     child2 = Child1_4(name='onetomany_test9_2')
-    parent = Parent1_4(name='onetomany_test9', children={child1, child2})
+    parent = Parent1_4(name='onetomany_test9', children=[child1, child2])
 
     session.commit()
 
@@ -183,8 +183,8 @@ def test10():
     child1 = Child1_4(name='onetomany_test10_1')
     child2 = Child1_4(name='onetomany_test10_2')
     parent = Parent1_4(name='onetomany_test10')
-    parent.children.add(child1)
-    parent.children.add(child2)
+    parent.children.append(child1)
+    parent.children.append(child2)
 
     session.commit()
 

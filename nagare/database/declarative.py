@@ -16,7 +16,7 @@ from nagare.services import database
 
 class FKRelationship(object):
 
-    def __init__(self, target, colname=None, inverse=None, collection_class=set, **kw):
+    def __init__(self, target, colname=None, inverse=None, collection_class=list, **kw):
         self.target = target
         self.colname = colname
         self.inverse = inverse
@@ -155,7 +155,7 @@ class ManyToMany(FKRelationship):
             self,
             target,
             tablename=None, local_colname=None, remote_colname=None, table=None, table_kwargs=None,
-            inverse=None, collection_class=set,
+            inverse=None, collection_class=list,
             **kw
     ):
         super(ManyToMany, self).__init__(target, '', inverse, collection_class, **kw)
@@ -168,10 +168,9 @@ class ManyToMany(FKRelationship):
 
     def _config(self, local_cls, target_cls, key, target_rel_name):
         tablename = self.tablename
-
         if not tablename:
-            source_part = (local_cls.__name__ + ('_' + target_rel_name if target_rel_name else '')).lower()
-            target_part = (target_cls.__name__ + '_' + key).lower()
+            source_part = (local_cls.__tablename__ + '_' + key).lower()
+            target_part = (target_cls.__tablename__ + ('_' + target_rel_name if target_rel_name else '')).lower()
 
             if target_rel_name and (source_part < target_part):
                 tablename = (target_part, source_part)
