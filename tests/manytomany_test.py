@@ -11,9 +11,9 @@
 
 import pytest
 
-from sqlalchemy import orm, create_engine, Text
+from sqlalchemy import create_engine, Text
 
-from nagare.database import metadata, session
+from nagare.database import metadata, session, configure_mappers
 from nagare.database.declarative import Entity, Field, ManyToMany
 
 
@@ -55,7 +55,7 @@ class Tag3_4(Entity):
     movies = ManyToMany('Movie3_4')
 
 
-orm.configure_mappers()
+configure_mappers(list)
 
 metadata.bind = create_engine('sqlite://', echo=False)
 metadata.create_all()

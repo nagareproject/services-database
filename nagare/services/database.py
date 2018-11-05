@@ -8,7 +8,7 @@
 # --
 
 import zope.sqlalchemy
-from sqlalchemy import orm, MetaData, engine_from_config
+from sqlalchemy import orm, event, MetaData, engine_from_config
 
 from nagare.services import plugin
 from nagare.server import reference
@@ -19,12 +19,28 @@ session = orm.scoped_session(orm.sessionmaker())
 metadata = MetaData()
 
 
+class FKRelationshipBase(object):
+    pass
+
+
 def default_populate(app):
     pass
 
 
+def configure_mappers(collections_class=set):
+    @event.listens_for(orm.mapper, 'mapper_configured')
+    def config(mapper, cls):
+        for key, value in list(cls.__dict__.items()):
+            if isinstance(value, FKRelationshipBase):
+                value.config(cls, key, collections_class)
+
+    orm.configure_mappers()
+
+
 class Database(plugin.Plugin):
     CONFIG_SPEC = {
+        'collections_class': 'string(default=set)',
+
         '__many__': {  # Database sub-sections
             'activated': 'boolean(default=True)',
             'uri': 'string',  # Database connection string
@@ -37,7 +53,7 @@ class Database(plugin.Plugin):
             'twophases': 'boolean(default=False)',
 
             'metadata': 'string(default="nagare.database:metadata")',  # Database metadata: database entities description
-            'populate': 'string(default="nagare.services.database:default_populate")',
+            'populate': 'string(default="nagare.services.database:default_populate")'
         },
 
         'upgrade': {
@@ -51,9 +67,10 @@ class Database(plugin.Plugin):
         }
     }
 
-    def __init__(self, name, dist, upgrade, **configs):
+    def __init__(self, name, dist, collections_class, upgrade, **configs):
         super(Database, self).__init__(name, dist)
 
+        self.collections_class = reference.load_object(collections_class)[0] if ':' in collections_class else eval(collections_class)
         self.alembic_config = {k: v for k, v in upgrade.items() if v is not None}
         self.configs = configs
 
@@ -91,7 +108,7 @@ class Database(plugin.Plugin):
 
                 self.populates.append(reference.load_object(populate)[0])
 
-        orm.configure_mappers()
+        configure_mappers(self.collections_class)
 
     def create_all(self):
         for metadata in self.metadatas.values():

@@ -9,14 +9,14 @@
 
 from sqlalchemy.ext import declarative
 from sqlalchemy import Column as Field
-from sqlalchemy import orm, event, Integer, ForeignKey, Table
+from sqlalchemy import orm, Integer, ForeignKey, Table
 
 from nagare.services import database
 
 
-class FKRelationship(object):
+class FKRelationship(database.FKRelationshipBase):
 
-    def __init__(self, target, colname=None, inverse=None, collection_class=list, **kw):
+    def __init__(self, target, colname=None, inverse=None, collection_class=None, **kw):
         self.target = target
         self.colname = colname
         self.inverse = inverse
@@ -66,7 +66,7 @@ class FKRelationship(object):
 
         return target_rel_name, target_rel
 
-    def config(self, local_cls, key):
+    def config(self, local_cls, key, collection_class):
         target_cls = self.target_cls(local_cls)
         if target_cls is None:
             raise ValueError('In %r, relation "%s", target table "%s" not found' % (local_cls, key, self.target))
@@ -78,12 +78,12 @@ class FKRelationship(object):
             relationship_kwargs['backref'] = orm.backref(
                 target_rel_name,
                 uselist=backref_uselist,
-                collection_class=self.collection_class
+                collection_class=self.collection_class or collection_class
             )
 
         rel = orm.relationship(
             target_cls,
-            collection_class=self.collection_class,
+            collection_class=self.collection_class or collection_class,
             **dict(relationship_kwargs, **self.relationship_kwargs)
         )
         setattr(local_cls, key, rel)
@@ -155,7 +155,7 @@ class ManyToMany(FKRelationship):
             self,
             target,
             tablename=None, local_colname=None, remote_colname=None, table=None, table_kwargs=None,
-            inverse=None, collection_class=list,
+            inverse=None, collection_class=None,
             **kw
     ):
         super(ManyToMany, self).__init__(target, '', inverse, collection_class, **kw)
@@ -192,13 +192,6 @@ class ManyToMany(FKRelationship):
         )
 
         return True, {'secondary': table}
-
-
-@event.listens_for(orm.mapper, 'mapper_configured')
-def config(mapper, cls):
-    for key, value in list(cls.__dict__.items()):
-        if isinstance(value, FKRelationship):
-            value.config(cls, key)
 
 # -----------------------------------------------------------------------------
 
