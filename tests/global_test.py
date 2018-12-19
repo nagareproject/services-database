@@ -59,7 +59,11 @@ def test_1():
 def test_2():
     """ database - simple test with sqlalchemy/elixir unicode test """
     file_path = os.path.join(os.path.dirname(__file__), 'helloworld.csv')
-    reader = csv.reader(open(file_path, 'r'))
+    try:
+        f = open(file_path, 'r', encoding='utf-8')
+    except TypeError:
+        f = open(file_path, 'r')
+    reader = csv.reader(f)
 
     res = {}
     for lang, label in reader:
