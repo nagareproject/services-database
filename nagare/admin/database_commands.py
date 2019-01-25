@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2018 Net-ng.
+# Copyright (c) 2008-2019 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -10,8 +10,12 @@
 from nagare.admin import command
 
 
+class Commands(command.Commands):
+    DESC = 'RDBMS subcommands'
+
+
 class Create(command.Command):
-    DESC = 'Create the database tables of an application'
+    DESC = 'create all database tables'
     WITH_STARTED_SERVICES = True
 
     def set_arguments(self, parser):
@@ -32,7 +36,7 @@ class Create(command.Command):
 
 
 class Drop(command.Command):
-    DESC = 'Drop the database tables of an application'
+    DESC = 'drop all database tables'
     WITH_STARTED_SERVICES = True
 
     @staticmethod

@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2018 Net-ng.
+# Copyright (c) 2008-2019 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -81,7 +81,7 @@ class AlembicCommand(AlembicBaseCommand):
 
 
 class Init(AlembicBaseCommand):
-    DESC = 'Initialize a new scripts directory'
+    DESC = 'initialize a new scripts directory'
 
     def run(self, database_service, services_service):
         if os.path.exists(self.ROOT):
@@ -122,7 +122,7 @@ class Stamp(AlembicCommand):
 
 
 class Revision(AlembicCommand):
-    DESC = 'Create a new revision file'
+    DESC = 'create a new revision file'
 
     def _set_arguments(self, parser):
         parser.add_argument(
@@ -166,7 +166,7 @@ class Revision(AlembicCommand):
 
 
 class Upgrade(AlembicCommand):
-    DESC = 'Upgrade to a later version'
+    DESC = 'upgrade to a later version'
 
     def _set_arguments(self, parser):
         parser.add_argument(
@@ -182,11 +182,11 @@ class Upgrade(AlembicCommand):
 
 
 class Downgrade(Upgrade):
-    DESC = 'Revert to a previous version'
+    DESC = 'revert to a previous version'
 
 
 class Current(AlembicCommand):
-    DESC = 'Display the current revision for a database'
+    DESC = 'display the current revision for a database'
 
     def _set_arguments(self, parser):
         parser.add_argument(
@@ -197,7 +197,7 @@ class Current(AlembicCommand):
 
 
 class History(AlembicCommand):
-    DESC = 'Upgrade to a later version'
+    DESC = 'upgrade to a later version'
 
     def _set_arguments(self, parser):
         parser.add_argument(
@@ -212,7 +212,7 @@ class History(AlembicCommand):
 
 
 class Branches(AlembicCommand):
-    DESC = 'Display the current revision for a database'
+    DESC = 'display the current revision for a database'
 
     def _set_arguments(self, parser):
         parser.add_argument(
@@ -223,7 +223,7 @@ class Branches(AlembicCommand):
 
 
 class Heads(AlembicCommand):
-    DESC = 'Show current available heads in the script directory'
+    DESC = 'show current available heads in the script directory'
 
     def _set_arguments(self, parser):
         parser.add_argument(
@@ -238,7 +238,7 @@ class Heads(AlembicCommand):
 
 
 class Merge(AlembicCommand):
-    DESC = 'Merge two revisions together.  Creates a new migration file'
+    DESC = 'merge two revisions together and creates a new migration file'
 
     def _set_arguments(self, parser):
         parser.add_argument(
@@ -261,7 +261,7 @@ class Merge(AlembicCommand):
 
 
 class Show(AlembicCommand):
-    DESC = 'Show the revision(s) denoted by the given symbol'
+    DESC = 'show the revision(s) denoted by the given symbol'
 
     def _set_arguments(self, parser):
         parser.add_argument(
