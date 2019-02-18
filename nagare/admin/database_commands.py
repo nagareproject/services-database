@@ -7,6 +7,8 @@
 # this distribution.
 # --
 
+import transaction
+
 from nagare.admin import command
 
 
@@ -28,11 +30,12 @@ class Create(command.Command):
 
     @staticmethod
     def run(database_service, application_service, drop=False):
-        if drop:
-            database_service.drop_all()
+        with transaction.manager:
+            if drop:
+                database_service.drop_all()
 
-        database_service.create_all()
-        database_service.populate_all(application_service.service)
+            database_service.create_all()
+            database_service.populate_all(application_service.service)
 
 
 class Drop(command.Command):
@@ -41,4 +44,5 @@ class Drop(command.Command):
 
     @staticmethod
     def run(database_service):
-        database_service.drop_all()
+        with transaction.manager:
+            database_service.drop_all()
