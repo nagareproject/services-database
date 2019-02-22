@@ -43,7 +43,7 @@ class Database(plugin.Plugin):
 
         '__many__': {  # Database sub-sections
             'activated': 'boolean(default=True)',
-            'uri': 'string',  # Database connection string
+            'uri': 'string(default=None)',  # Database connection string
             'debug': 'boolean(default=False)',  # Set the database engine in debug mode?
 
             'session': 'string(default="nagare.database:session")',
@@ -91,10 +91,11 @@ class Database(plugin.Plugin):
         return engine_config
 
     def _configure_engine(self, name, uri, debug, metadata, populate, **config):
-        engine = engine_from_config(config, '', echo=debug, url=uri)
-
         metadata = reference.load_object(metadata)[0]
-        metadata.bind = engine
+
+        if uri:
+            engine = engine_from_config(config, '', echo=debug, url=uri)
+            metadata.bind = engine
 
         self.metadatas[name] = metadata
 
