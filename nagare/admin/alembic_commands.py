@@ -48,7 +48,7 @@ class AlembicBaseCommand(command.Command):
             getattr(alembic_command, self.__class__.__name__.lower())(cfg, **params)
             return 0
         except util.exc.CommandError as e:
-            print('FAILED:', str(e))
+            print('FAILED: {}'.format(str(e)))
             return 1
 
 
@@ -85,7 +85,7 @@ class Init(AlembicBaseCommand):
 
     def run(self, database_service, services_service):
         if os.path.exists(self.ROOT):
-            print("'%s' already exists" % self.ROOT)
+            print("'{}' already exists".format(self.ROOT))
         else:
             os.mkdir(self.ROOT)
 

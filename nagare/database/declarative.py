@@ -47,8 +47,8 @@ class FKRelationship(database.FKRelationshipBase):
 
             if (len(rels_with_inverse) > 1) or (not rels_with_inverse and (len(rels_without_inverse) > 1)):
                 raise ValueError(
-                    "Several relations in entity '%s' match as inverse of the '%s' relation in entity '%s'. "
-                    "You should specify inverse relations manually by using the inverse keyword." % (
+                    "Several relations in entity '{}' match as inverse of the '{}' relation in entity '{}'. "
+                    "You should specify inverse relations manually by using the inverse keyword.".format(
                         target_cls.__name__,
                         key,
                         local_cls.__name__
@@ -69,7 +69,7 @@ class FKRelationship(database.FKRelationshipBase):
     def config(self, local_cls, key, collection_class):
         target_cls = self.target_cls(local_cls)
         if target_cls is None:
-            raise ValueError('In %r, relation "%s", target table "%s" not found' % (local_cls, key, self.target))
+            raise ValueError('In {}, relation "{}", target table "{}" not found'.format(local_cls, key, self.target))
 
         target_rel_name, target_rel = self.find_inverse(local_cls, key, target_cls)
         backref_uselist, relationship_kwargs = self._config(local_cls, target_cls, key, target_rel_name)
@@ -183,7 +183,7 @@ class ManyToMany(FKRelationship):
         target_pk_name = (target_pk.table.description + '_' + target_pk.description)
 
         table = self.table or Table(
-            '%s__%s' % tablename,
+            '{}__{}'.format(*tablename),
             local_cls.metadata,
             Field(self.local_colname or local_pk_name, ForeignKey(local_pk), primary_key=True),
             Field(self.remote_colname or target_pk_name, ForeignKey(target_pk), primary_key=True),

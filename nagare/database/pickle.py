@@ -18,7 +18,7 @@ from nagare.services import database
 
 class NonSerializable(object):
     def __reduce__(self):
-        raise PicklingError("SQLAlchemy entity <%s> can't be serialized" % self.__class__.__name__)
+        raise PicklingError("SQLAlchemy entity <{}> can't be serialized".format(self.__class__.__name__))
 
 
 def entity_getstate(entity):
