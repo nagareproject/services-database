@@ -90,11 +90,12 @@ class Database(plugin.Plugin):
 
         return engine_config
 
-    def _configure_engine(self, name, uri, debug, metadata, populate, **config):
+    def _configure_engine(self, name, engines, uri, debug, metadata, populate, **config):
         metadata = reference.load_object(metadata)[0]
 
         if uri:
-            engine = engine_from_config(config, '', echo=debug, url=uri)
+            key = (uri, frozenset(config.items()), debug)
+            engine = engines.setdefault(key, engine_from_config(config, '', echo=debug, url=uri))
             metadata.bind = engine
 
         self.metadatas[name] = metadata
@@ -102,10 +103,11 @@ class Database(plugin.Plugin):
         return populate
 
     def handle_start(self, app):
+        engines = {}
         for name, config in self.configs.items():
             if config.pop('activated'):
                 engine_config = self._configure_session(**config)
-                populate = self._configure_engine(name, **engine_config)
+                populate = self._configure_engine(name, engines, **engine_config)
 
                 self.populates.append(reference.load_object(populate)[0])
 
