@@ -78,6 +78,10 @@ class Database(plugin.Plugin):
         self.populates = []
 
     @staticmethod
+    def handle_interactive():
+        return {'session': session}
+
+    @staticmethod
     def _configure_session(session, autoflush, autocommit, expire_on_commit, twophases, **engine_config):
         session = reference.load_object(session)[0]
         session.configure(
