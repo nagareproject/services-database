@@ -29,13 +29,13 @@ class Create(command.Command):
         )
 
     @staticmethod
-    def run(database_service, application_service, drop=False):
+    def run(database_service, application_service, services_service, drop=False):
         with transaction.manager:
             if drop:
                 database_service.drop_all()
 
             database_service.create_all()
-            database_service.populate_all(application_service.service)
+            database_service.populate_all(application_service.service, services_service)
 
 
 class Drop(command.Command):

@@ -130,6 +130,6 @@ class Database(plugin.Plugin):
 
             metadata.drop_all()
 
-    def populate_all(self, app):
+    def populate_all(self, app, services_service):
         for populate in self.populates:
-            populate(app)
+            services_service(populate, app)

@@ -55,7 +55,7 @@ class AlembicBaseCommand(command.Command):
 class AlembicCommand(AlembicBaseCommand):
 
     def _set_arguments(self, parser):
-        parser.add_argument('--db', help="Name of the db section")
+        parser.add_argument('--db', help="name of the db section")
         super(AlembicCommand, self)._set_arguments(parser)
 
     def run(self, database_service, db=None, **params):
@@ -111,11 +111,11 @@ class Stamp(AlembicCommand):
     def _set_arguments(self, parser):
         parser.add_argument(
             '--sql', action='store_true',
-            help="Don't emit SQL to database - dump to  standard output/file instead"
+            help="don't emit SQL to database - dump to  standard output/file instead"
         )
         parser.add_argument(
             '--tag',
-            help='Arbitrary "tag" name. Can be used by custom env.py scripts'
+            help='arbitrary "tag" name. Can be used by custom env.py scripts'
         )
         parser.add_argument('revision')
         super(Stamp, self)._set_arguments(parser)
@@ -127,40 +127,40 @@ class Revision(AlembicCommand):
     def _set_arguments(self, parser):
         parser.add_argument(
             '-m', '--message',
-            help='Message string to use with "revision"'
+            help='message string to use with "revision"'
         )
         parser.add_argument(
             '-a', '--autogenerate', action='store_true',
-            help='Populate revision script with candidate migration operations,'
+            help='populate revision script with candidate migration operations,'
             'based on comparison of database to models'
         )
         parser.add_argument(
             '--sql', action='store_true',
-            help="Don't emit SQL to database - dump to  standard output/file instead"
+            help="don't emit SQL to database - dump to  standard output/file instead"
         )
         parser.add_argument(
             '--head', default='head',
-            help='Specify head revision or <branchname>@head to base new revision on'
+            help='specify head revision or <branchname>@head to base new revision on'
         )
         parser.add_argument(
             '--splice', action='store_true',
-            help='Allow a non-head revision as the "head" to splice onto'
+            help='allow a non-head revision as the "head" to splice onto'
         )
         parser.add_argument(
             '--branch-label',
-            help='Specify a branch label to apply to the  new revision'
+            help='specify a branch label to apply to the  new revision'
         )
         parser.add_argument(
             '--version-path',
-            help='Specify specific path from config for version file'
+            help='specify specific path from config for version file'
         )
         parser.add_argument(
             '--rev-id',
-            help='Specify a hardcoded revision id instead of  generating one'
+            help='specify a hardcoded revision id instead of  generating one'
         )
         parser.add_argument(
             '--depends-on', action='append',
-            help='Specify one or more revision identifiers which this revision should depend on'
+            help='specify one or more revision identifiers which this revision should depend on'
         )
         super(Revision, self)._set_arguments(parser)
 
@@ -171,11 +171,11 @@ class Upgrade(AlembicCommand):
     def _set_arguments(self, parser):
         parser.add_argument(
             '--sql', action='store_true',
-            help="Don't emit SQL to database - dump to  standard output/file instead"
+            help="don't emit SQL to database - dump to  standard output/file instead"
         )
         parser.add_argument(
             '--tag',
-            help='Arbitrary "tag" name. Can be used by custom env.py scripts'
+            help='arbitrary "tag" name. Can be used by custom env.py scripts'
         )
         parser.add_argument('revision')
         super(Upgrade, self)._set_arguments(parser)
@@ -191,7 +191,7 @@ class Current(AlembicCommand):
     def _set_arguments(self, parser):
         parser.add_argument(
             '-v', '--verbose', action='store_true',
-            help='Use more verbose output'
+            help='use more verbose output'
         )
         super(Current, self)._set_arguments(parser)
 
@@ -202,11 +202,11 @@ class History(AlembicCommand):
     def _set_arguments(self, parser):
         parser.add_argument(
             '-r', '--rev-range',
-            help='Specify a revision range; format is [start]:[end]")'
+            help='specify a revision range; format is [start]:[end]")'
         )
         parser.add_argument(
             '-v', '--verbose', action='store_true',
-            help='Use more verbose output'
+            help='use more verbose output'
         )
         super(History, self)._set_arguments(parser)
 
@@ -217,7 +217,7 @@ class Branches(AlembicCommand):
     def _set_arguments(self, parser):
         parser.add_argument(
             '-v', '--verbose', action='store_true',
-            help='Use more verbose output'
+            help='use more verbose output'
         )
         super(Branches, self)._set_arguments(parser)
 
@@ -228,7 +228,7 @@ class Heads(AlembicCommand):
     def _set_arguments(self, parser):
         parser.add_argument(
             '-v', '--verbose', action='store_true',
-            help='Use more verbose output'
+            help='use more verbose output'
         )
         parser.add_argument(
             '--resolve-dependencies', action='store_true',
@@ -251,7 +251,7 @@ class Merge(AlembicCommand):
         )
         parser.add_argument(
             '--rev-id',
-            help='Specify a hardcoded revision id instead of  generating one'
+            help='specify a hardcoded revision id instead of  generating one'
         )
         parser.add_argument(
             'revisions', nargs='+',
