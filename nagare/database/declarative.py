@@ -72,7 +72,7 @@ class FKRelationship(database.FKRelationshipBase):
             raise ValueError('In {}, relation "{}", target table "{}" not found'.format(local_cls, key, self.target))
 
         target_rel_name, target_rel = self.find_inverse(local_cls, key, target_cls)
-        backref_uselist, relationship_kwargs = self._config(local_cls, target_cls, key, target_rel_name)
+        backref_uselist, relationship_kwargs = self._config(local_cls, target_cls, key, target_rel_name, **self.relationship_kwargs)
 
         if (target_rel_name is not None) and (target_rel is None):
             relationship_kwargs['backref'] = orm.backref(
@@ -84,7 +84,7 @@ class FKRelationship(database.FKRelationshipBase):
         rel = orm.relationship(
             target_cls,
             collection_class=self.collection_class or collection_class,
-            **dict(relationship_kwargs, **self.relationship_kwargs)
+            **relationship_kwargs
         )
         setattr(local_cls, key, rel)
 
@@ -98,21 +98,22 @@ class OneToMany(FKRelationship):
     RELATIONSHIP_NAME = 'OneToMany'
     INVERSE_RELATIONSHIP_NAME = ('ManyToOne',)
 
-    def create_foreign_key(self, foreign_key_name, pk, target_cls, key, **kw):
+    def create_foreign_key(self, foreign_key_name, pk, target_cls, key, unique=False, index=True, **kw):
         foreign_key_name = self.colname or ((foreign_key_name or pk.table.description) + '_' + pk.description)
 
         foreign_key = getattr(target_cls, foreign_key_name, None)
         if foreign_key is None:
-            foreign_key = Field(foreign_key_name, pk.type, ForeignKey(pk), **kw)
+            foreign_key = Field(foreign_key_name, pk.type, ForeignKey(pk), unique=unique, index=index)
             setattr(target_cls, foreign_key_name, foreign_key)
 
-        return foreign_key
+        return foreign_key, kw
 
-    def _config(self, local_cls, target_cls, key, target_rel_name):
+    def _config(self, local_cls, target_cls, key, target_rel_name, **kw):
         pk = list(local_cls.__table__.primary_key)[0]
-        foreign_key = self.create_foreign_key(target_rel_name, pk, target_cls, key)
+        foreign_key, kw = self.create_foreign_key(target_rel_name, pk, target_cls, key, **kw)
+        kw['primaryjoin'] = foreign_key == pk
 
-        return False, {'primaryjoin': foreign_key == pk}
+        return False, kw
 
 
 class ManyToOne(OneToMany):
@@ -124,10 +125,11 @@ class ManyToOne(OneToMany):
     def create_foreign_key(self, foreign_key_name, pk, target_cls, key, **kw):
         return super(ManyToOne, self).create_foreign_key(key, pk, target_cls, key, **kw)
 
-    def _config(self, local_cls, target_cls, key, target_rel_name):
-        _, relationship_kwargs = super(ManyToOne, self)._config(target_cls, local_cls, key, target_rel_name)
+    def _config(self, local_cls, target_cls, key, target_rel_name, **kw):
+        _, kw = super(ManyToOne, self)._config(target_cls, local_cls, key, target_rel_name, **kw)
+        kw['uselist'] = False
 
-        return True, dict(relationship_kwargs, uselist=False)
+        return True, kw
 
 
 class OneToOne(OneToMany):
@@ -139,10 +141,11 @@ class OneToOne(OneToMany):
     def create_foreign_key(self, foreign_key_name, pk, target_cls, key, **kw):
         return super(OneToOne, self).create_foreign_key(foreign_key_name, pk, target_cls, key, unique=True, **kw)
 
-    def _config(self, local_cls, target_cls, key, target_rel_name):
-        _, relationship_kwargs = super(OneToOne, self)._config(local_cls, target_cls, key, target_rel_name)
+    def _config(self, local_cls, target_cls, key, target_rel_name, **kw):
+        _, kw = super(OneToOne, self)._config(local_cls, target_cls, key, target_rel_name, **kw)
+        kw['uselist'] = False
 
-        return False, dict(relationship_kwargs, uselist=False)
+        return False, kw
 
 
 class ManyToMany(FKRelationship):
@@ -166,7 +169,7 @@ class ManyToMany(FKRelationship):
         self.table = table
         self.table_kwargs = table_kwargs or {}
 
-    def _config(self, local_cls, target_cls, key, target_rel_name):
+    def _config(self, local_cls, target_cls, key, target_rel_name, **kw):
         tablename = self.tablename
         if not tablename:
             source_part = (local_cls.__tablename__ + '_' + key).lower()
@@ -190,8 +193,9 @@ class ManyToMany(FKRelationship):
             keep_existing=True,
             **self.table_kwargs
         )
+        kw['secondary'] = table
 
-        return True, {'secondary': table}
+        return True, kw
 
 # -----------------------------------------------------------------------------
 
