@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2019 Net-ng.
+# Copyright (c) 2008-2020 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -68,7 +68,10 @@ class Database(plugin.Plugin):
     }
 
     def __init__(self, name, dist, collections_class, upgrade, **configs):
-        super(Database, self).__init__(name, dist)
+        super(Database, self).__init__(
+            name, dist,
+            collections_class=collections_class, upgrade=upgrade,
+            **configs)
 
         self.collections_class = reference.load_object(collections_class)[0] if ':' in collections_class else eval(collections_class)
         self.alembic_config = {k: v for k, v in upgrade.items() if v is not None}
