@@ -254,6 +254,10 @@ class _NagareEntity(object):
 
         declarative.api._declarative_constructor(self, **kw)
 
+    def set(self, **kw):
+        for key, value in kw.items():
+            setattr(self, key, value)
+
     def flush(self, *args, **kw):
         return orm.object_session(self).flush([self], *args, **kw)
 
