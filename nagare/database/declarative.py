@@ -72,7 +72,11 @@ class FKRelationship(database.FKRelationshipBase):
             raise ValueError('In {}, relation "{}", target table "{}" not found'.format(local_cls, key, self.target))
 
         target_rel_name, target_rel = self.find_inverse(local_cls, key, target_cls)
-        backref_uselist, relationship_kwargs = self._config(local_cls, target_cls, key, target_rel_name, **self.relationship_kwargs)
+        backref_uselist, relationship_kwargs = self._config(
+            local_cls, target_cls,
+            key, target_rel_name,
+            **self.relationship_kwargs
+        )
 
         if (target_rel_name is not None) and (target_rel is None):
             relationship_kwargs['backref'] = orm.backref(
@@ -98,12 +102,16 @@ class OneToMany(FKRelationship):
     RELATIONSHIP_NAME = 'OneToMany'
     INVERSE_RELATIONSHIP_NAME = ('ManyToOne',)
 
-    def create_foreign_key(self, foreign_key_name, pk, target_cls, key, unique=False, index=True, **kw):
+    def create_foreign_key(self, foreign_key_name, pk, target_cls, key, unique=False, index=True, nullable=True, **kw):
         foreign_key_name = self.colname or ((foreign_key_name or pk.table.description) + '_' + pk.description)
 
         foreign_key = getattr(target_cls, foreign_key_name, None)
         if foreign_key is None:
-            foreign_key = Field(foreign_key_name, pk.type, ForeignKey(pk), unique=unique, index=index)
+            foreign_key = Field(
+                foreign_key_name, pk.type,
+                ForeignKey(pk),
+                unique=unique, index=index, nullable=nullable
+            )
             setattr(target_cls, foreign_key_name, foreign_key)
 
         return foreign_key, kw
