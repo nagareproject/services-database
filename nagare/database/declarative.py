@@ -101,17 +101,20 @@ class OneToMany(FKRelationship):
 
     RELATIONSHIP_NAME = 'OneToMany'
     INVERSE_RELATIONSHIP_NAME = ('ManyToOne',)
+    FOREIGN_KEY_PARAMS = {'index': True}
 
-    def create_foreign_key(self, foreign_key_name, pk, target_cls, key, unique=False, index=True, nullable=True, **kw):
+    def create_foreign_key(self, foreign_key_name, pk, target_cls, key, **kw):
         foreign_key_name = self.colname or ((foreign_key_name or pk.table.description) + '_' + pk.description)
-
         foreign_key = getattr(target_cls, foreign_key_name, None)
+        foreign_key_params = {
+            name: kw.pop(name, value)
+            for name, value
+            in self.FOREIGN_KEY_PARAMS.items()
+            if (name in kw) or (value is not None)
+        }
+
         if foreign_key is None:
-            foreign_key = Field(
-                foreign_key_name, pk.type,
-                ForeignKey(pk),
-                unique=unique, index=index, nullable=nullable
-            )
+            foreign_key = Field(foreign_key_name, pk.type, ForeignKey(pk), **foreign_key_params)
             setattr(target_cls, foreign_key_name, foreign_key)
 
         return foreign_key, kw
@@ -129,6 +132,7 @@ class ManyToOne(OneToMany):
 
     RELATIONSHIP_NAME = 'ManyToOne'
     INVERSE_RELATIONSHIP_NAME = ('OneToMany', 'OneToOne')
+    FOREIGN_KEY_PARAMS = {'index': True, 'nullable': None}
 
     def create_foreign_key(self, foreign_key_name, pk, target_cls, key, **kw):
         return super(ManyToOne, self).create_foreign_key(key, pk, target_cls, key, **kw)
@@ -145,9 +149,10 @@ class OneToOne(OneToMany):
 
     RELATIONSHIP_NAME = 'OneToOne'
     INVERSE_RELATIONSHIP_NAME = ('ManyToOne',)
+    FOREIGN_KEY_PARAMS = {'index': True, 'unique': True}
 
     def create_foreign_key(self, foreign_key_name, pk, target_cls, key, **kw):
-        return super(OneToOne, self).create_foreign_key(foreign_key_name, pk, target_cls, key, unique=True, **kw)
+        return super(OneToOne, self).create_foreign_key(foreign_key_name, pk, target_cls, key, **kw)
 
     def _config(self, local_cls, target_cls, key, target_rel_name, **kw):
         _, kw = super(OneToOne, self)._config(local_cls, target_cls, key, target_rel_name, **kw)
