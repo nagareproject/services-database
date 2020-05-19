@@ -15,6 +15,8 @@ from nagare.services import database
 
 
 class FKRelationship(database.FKRelationshipBase):
+    RELATIONSHIP_NAME = ''
+    INVERSE_RELATIONSHIP_NAME = ()
 
     def __init__(self, target, colname=None, inverse=None, collection_class=None, **kw):
         self.target = target
@@ -74,8 +76,7 @@ class FKRelationship(database.FKRelationshipBase):
         target_rel_name, target_rel = self.find_inverse(local_cls, key, target_cls)
         backref_uselist, relationship_kwargs = self._config(
             local_cls, target_cls,
-            key, target_rel_name,
-            **self.relationship_kwargs
+            key, target_rel_name
         )
 
         if (target_rel_name is not None) and (target_rel is None):
@@ -101,30 +102,34 @@ class OneToMany(FKRelationship):
 
     RELATIONSHIP_NAME = 'OneToMany'
     INVERSE_RELATIONSHIP_NAME = ('ManyToOne',)
-    FOREIGN_KEY_PARAMS = {'index': True}
 
-    def create_foreign_key(self, foreign_key_name, pk, target_cls, key, **kw):
+    @staticmethod
+    def create_foreign_key(pk, onupdate=None, ondelete=None, **kw):
+        return ForeignKey(pk, onupdate=onupdate, ondelete=ondelete), kw
+
+    @staticmethod
+    def create_foreign_field_params(index=True, nullable=True, **kw):
+        return {'index': index, 'nullable': nullable}, kw
+
+    def create_foreign_field(self, foreign_key_name, pk, target_cls, key):
+        foreign_field_params = target_cls.get_params_of_field(foreign_key_name)
+        foreign_key, foreign_field_params = self.create_foreign_key(pk, **foreign_field_params)
+        foreign_field_params, kw = self.create_foreign_field_params(**foreign_field_params)
+
         foreign_key_name = self.colname or ((foreign_key_name or pk.table.description) + '_' + pk.description)
-        foreign_key = getattr(target_cls, foreign_key_name, None)
-        foreign_key_params = {
-            name: kw.pop(name, value)
-            for name, value
-            in self.FOREIGN_KEY_PARAMS.items()
-            if (name in kw) or (value is not None)
-        }
+        foreign_key_field = getattr(target_cls, foreign_key_name, None)
 
-        if foreign_key is None:
-            foreign_key = Field(foreign_key_name, pk.type, ForeignKey(pk), **foreign_key_params)
-            setattr(target_cls, foreign_key_name, foreign_key)
+        if foreign_key_field is None:
+            foreign_key_field = Field(foreign_key_name, pk.type, foreign_key, **foreign_field_params)
+            setattr(target_cls, foreign_key_name, foreign_key_field)
 
-        return foreign_key, kw
+        return foreign_key_field, kw
 
-    def _config(self, local_cls, target_cls, key, target_rel_name, **kw):
+    def _config(self, local_cls, target_cls, key, target_rel_name):
         pk = list(local_cls.__table__.primary_key)[0]
-        foreign_key, kw = self.create_foreign_key(target_rel_name, pk, target_cls, key, **kw)
-        kw['primaryjoin'] = foreign_key == pk
+        foreign_key, _ = self.create_foreign_field(target_rel_name, pk, target_cls, key)
 
-        return False, kw
+        return False, dict(local_cls.get_params_of_field(key), primaryjoin=foreign_key == pk)
 
 
 class ManyToOne(OneToMany):
@@ -132,13 +137,12 @@ class ManyToOne(OneToMany):
 
     RELATIONSHIP_NAME = 'ManyToOne'
     INVERSE_RELATIONSHIP_NAME = ('OneToMany', 'OneToOne')
-    FOREIGN_KEY_PARAMS = {'index': True, 'nullable': None}
 
-    def create_foreign_key(self, foreign_key_name, pk, target_cls, key, **kw):
-        return super(ManyToOne, self).create_foreign_key(key, pk, target_cls, key, **kw)
+    def create_foreign_field(self, foreign_key_name, pk, target_cls, key):
+        return super(ManyToOne, self).create_foreign_field(key, pk, target_cls, key)
 
-    def _config(self, local_cls, target_cls, key, target_rel_name, **kw):
-        _, kw = super(ManyToOne, self)._config(target_cls, local_cls, key, target_rel_name, **kw)
+    def _config(self, local_cls, target_cls, key, target_rel_name):
+        _, kw = super(ManyToOne, self)._config(target_cls, local_cls, key, target_rel_name)
         kw['uselist'] = False
 
         return True, kw
@@ -151,8 +155,8 @@ class OneToOne(OneToMany):
     INVERSE_RELATIONSHIP_NAME = ('ManyToOne',)
     FOREIGN_KEY_PARAMS = {'index': True, 'unique': True}
 
-    def create_foreign_key(self, foreign_key_name, pk, target_cls, key, **kw):
-        return super(OneToOne, self).create_foreign_key(foreign_key_name, pk, target_cls, key, **kw)
+    def create_foreign_field(self, foreign_key_name, pk, target_cls, key, **kw):
+        return super(OneToOne, self).create_foreign_field(foreign_key_name, pk, target_cls, key, **kw)
 
     def _config(self, local_cls, target_cls, key, target_rel_name, **kw):
         _, kw = super(OneToOne, self)._config(local_cls, target_cls, key, target_rel_name, **kw)
@@ -182,7 +186,15 @@ class ManyToMany(FKRelationship):
         self.table = table
         self.table_kwargs = table_kwargs or {}
 
-    def _config(self, local_cls, target_cls, key, target_rel_name, **kw):
+    @staticmethod
+    def create_foreign_key(pk, onupdate=None, ondelete=None, **kw):
+        return ForeignKey(pk, onupdate=onupdate, ondelete=ondelete), kw
+
+    @staticmethod
+    def create_foreign_field_params(index=True, nullable=False, primary_key=True, **kw):
+        return {'index': index, 'nullable': nullable, 'primary_key': primary_key}, kw
+
+    def _config(self, local_cls, target_cls, key, target_rel_name):
         tablename = self.tablename
         if not tablename:
             source_part = (local_cls.__tablename__ + '_' + key).lower()
@@ -198,14 +210,24 @@ class ManyToMany(FKRelationship):
         target_pk = list(target_cls.__table__.primary_key)[0]
         target_pk_name = (target_pk.table.description + '_' + target_pk.description)
 
+        foreign_field_params1 = target_cls.get_params_of_field(target_rel_name)
+        foreign_key1, foreign_field_params1 = self.create_foreign_key(target_pk, **foreign_field_params1)
+        foreign_field_params1, _ = self.create_foreign_field_params(**foreign_field_params1)
+
+        foreign_field_params2 = local_cls.get_params_of_field(key)
+        foreign_key2, foreign_field_params2 = self.create_foreign_key(local_pk, **foreign_field_params2)
+        foreign_field_params2, kw = self.create_foreign_field_params(**foreign_field_params2)
+
         table = self.table or Table(
             '{}__{}'.format(*tablename),
             local_cls.metadata,
-            Field(self.local_colname or local_pk_name, ForeignKey(local_pk), primary_key=True),
-            Field(self.remote_colname or target_pk_name, ForeignKey(target_pk), primary_key=True),
+            Field(self.local_colname or local_pk_name, foreign_key1, **foreign_field_params1),
+            Field(self.remote_colname or target_pk_name, foreign_key2, **foreign_field_params2),
+
             keep_existing=True,
             **self.table_kwargs
         )
+
         kw['secondary'] = table
 
         return True, kw
@@ -222,7 +244,22 @@ class EntityMeta(declarative.DeclarativeMeta):
         if bases and (bases[0].__name__ != '_NagareEntity'):
             meta.set_options(cls, **options)
 
+            cls.__relationships_params__ = {}
+            for name, relationship in ns.items():
+                if isinstance(relationship, FKRelationship):
+                    cls.set_params_of_field(name, relationship.relationship_kwargs)
+                    del relationship.relationship_kwargs
+
         return cls
+
+    def set_params_of_field(cls, field, params):
+        cls.__relationships_params__[field] = params
+
+    def get_params_of_field(cls, field):
+        return cls.__relationships_params__.get(field, {})
+
+    def del_params_of_field(cls):
+        del cls.__relationships_params__
 
     @staticmethod
     def set_options(

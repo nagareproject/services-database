@@ -28,13 +28,20 @@ def default_populate(app):
 
 
 def configure_mappers(collections_class=set):
+    classes = []
+
     @event.listens_for(orm.mapper, 'mapper_configured')
     def config(mapper, cls):
+        classes.append(cls)
         for key, value in list(cls.__dict__.items()):
             if isinstance(value, FKRelationshipBase):
                 value.config(cls, key, collections_class)
 
     orm.configure_mappers()
+
+    for cls in classes:
+        print(cls)
+        cls.del_params_of_field()
 
 
 class Database(plugin.Plugin):
