@@ -40,7 +40,6 @@ def configure_mappers(collections_class=set):
     orm.configure_mappers()
 
     for cls in classes:
-        print(cls)
         cls.del_params_of_field()
 
 
