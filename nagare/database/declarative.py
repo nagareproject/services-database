@@ -235,7 +235,7 @@ class ManyToMany(FKRelationship):
 # -----------------------------------------------------------------------------
 
 
-class EntityMeta(declarative.DeclarativeMeta):
+class EntityMeta(database.EntityMetaBase):
     def __new__(meta, name, bases, ns):
         options = ns.pop('using_options', {})
 

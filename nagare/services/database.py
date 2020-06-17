@@ -8,6 +8,7 @@
 # --
 
 import zope.sqlalchemy
+from sqlalchemy.ext import declarative
 from sqlalchemy import orm, event, MetaData, engine_from_config
 
 from nagare.services import plugin
@@ -17,6 +18,10 @@ from alembic.migration import MigrationContext
 
 session = orm.scoped_session(orm.sessionmaker())
 metadata = MetaData()
+
+
+class EntityMetaBase(declarative.DeclarativeMeta):
+    pass
 
 
 class FKRelationshipBase(object):
@@ -40,7 +45,8 @@ def configure_mappers(collections_class=set):
     orm.configure_mappers()
 
     for cls in classes:
-        cls.del_params_of_field()
+        if isinstance(cls, EntityMetaBase):
+            cls.del_params_of_field()
 
 
 class Database(plugin.Plugin):
