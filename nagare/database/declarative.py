@@ -68,13 +68,14 @@ class FKRelationship(database.FKRelationshipBase):
 
         return target_rel_name, target_rel
 
-    def config(self, local_cls, key, collection_class):
+    def config(self, local_cls, key, collection_class, inverse_foreign_keys):
         target_cls = self.target_cls(local_cls)
         if target_cls is None:
             raise ValueError('In {}, relation "{}", target table "{}" not found'.format(local_cls, key, self.target))
 
         target_rel_name, target_rel = self.find_inverse(local_cls, key, target_cls)
         backref_uselist, relationship_kwargs = self._config(
+            inverse_foreign_keys,
             local_cls, target_cls,
             key, target_rel_name
         )
@@ -125,7 +126,7 @@ class OneToMany(FKRelationship):
 
         return foreign_key_field, kw
 
-    def _config(self, local_cls, target_cls, key, target_rel_name):
+    def _config(self, inverse_foreign_keys, local_cls, target_cls, key, target_rel_name):
         pk = list(local_cls.__table__.primary_key)[0]
         foreign_key, _ = self.create_foreign_field(target_rel_name, pk, target_cls, key)
 
@@ -141,8 +142,8 @@ class ManyToOne(OneToMany):
     def create_foreign_field(self, foreign_key_name, pk, target_cls, key):
         return super(ManyToOne, self).create_foreign_field(key, pk, target_cls, key)
 
-    def _config(self, local_cls, target_cls, key, target_rel_name):
-        _, kw = super(ManyToOne, self)._config(target_cls, local_cls, key, target_rel_name)
+    def _config(self, inverse_foreign_keys, local_cls, target_cls, key, target_rel_name):
+        _, kw = super(ManyToOne, self)._config(inverse_foreign_keys, target_cls, local_cls, key, target_rel_name)
         kw['uselist'] = False
 
         return True, kw
@@ -158,8 +159,8 @@ class OneToOne(OneToMany):
     def create_foreign_field(self, foreign_key_name, pk, target_cls, key, **kw):
         return super(OneToOne, self).create_foreign_field(foreign_key_name, pk, target_cls, key, **kw)
 
-    def _config(self, local_cls, target_cls, key, target_rel_name, **kw):
-        _, kw = super(OneToOne, self)._config(local_cls, target_cls, key, target_rel_name, **kw)
+    def _config(self, inverse_foreign_keys, local_cls, target_cls, key, target_rel_name, **kw):
+        _, kw = super(OneToOne, self)._config(inverse_foreign_keys, local_cls, target_cls, key, target_rel_name, **kw)
         kw['uselist'] = False
 
         return False, kw
@@ -194,7 +195,7 @@ class ManyToMany(FKRelationship):
     def create_foreign_field_params(index=True, nullable=False, primary_key=True, **kw):
         return {'index': index, 'nullable': nullable, 'primary_key': primary_key}, kw
 
-    def _config(self, local_cls, target_cls, key, target_rel_name):
+    def _config(self, inverse_foreign_keys, local_cls, target_cls, key, target_rel_name):
         tablename = self.tablename
         if not tablename:
             source_part = (local_cls.__tablename__ + '_' + key).lower()
@@ -213,16 +214,21 @@ class ManyToMany(FKRelationship):
         foreign_field_params1 = target_cls.get_params_of_field(target_rel_name)
         foreign_key1, foreign_field_params1 = self.create_foreign_key(target_pk, **foreign_field_params1)
         foreign_field_params1, _ = self.create_foreign_field_params(**foreign_field_params1)
+        foreign_name1 = self.remote_colname or target_pk_name
 
         foreign_field_params2 = local_cls.get_params_of_field(key)
         foreign_key2, foreign_field_params2 = self.create_foreign_key(local_pk, **foreign_field_params2)
         foreign_field_params2, kw = self.create_foreign_field_params(**foreign_field_params2)
+        foreign_name2 = self.local_colname or local_pk_name
+
+        if inverse_foreign_keys:
+            foreign_name1, foreign_name2 = foreign_name2, foreign_name1
 
         table = self.table or Table(
             '{}__{}'.format(*tablename),
             local_cls.metadata,
-            Field(self.local_colname or local_pk_name, foreign_key1, **foreign_field_params1),
-            Field(self.remote_colname or target_pk_name, foreign_key2, **foreign_field_params2),
+            Field(foreign_name1, foreign_key1, **foreign_field_params1),
+            Field(foreign_name2, foreign_key2, **foreign_field_params2),
 
             keep_existing=True,
             **self.table_kwargs

@@ -32,7 +32,7 @@ def default_populate(app):
     pass
 
 
-def configure_mappers(collections_class=set):
+def configure_mappers(collections_class=set, inverse_foreign_keys=False):
     classes = []
 
     @event.listens_for(orm.mapper, 'mapper_configured')
@@ -40,7 +40,7 @@ def configure_mappers(collections_class=set):
         classes.append(cls)
         for key, value in list(cls.__dict__.items()):
             if isinstance(value, FKRelationshipBase):
-                value.config(cls, key, collections_class)
+                value.config(cls, key, collections_class, inverse_foreign_keys)
 
     orm.configure_mappers()
 
@@ -52,6 +52,7 @@ def configure_mappers(collections_class=set):
 class Database(plugin.Plugin):
     CONFIG_SPEC = {
         'collections_class': 'string(default=set)',
+        'inverse_foreign_keys': 'boolean(default=False)',
 
         '__many__': {  # Database sub-sections
             'activated': 'boolean(default=True)',
@@ -79,13 +80,16 @@ class Database(plugin.Plugin):
         }
     }
 
-    def __init__(self, name, dist, collections_class, upgrade, **configs):
+    def __init__(self, name, dist, collections_class, inverse_foreign_keys, upgrade, **configs):
         super(Database, self).__init__(
             name, dist,
-            collections_class=collections_class, upgrade=upgrade,
+            collections_class=collections_class,
+            inverse_foreign_keys=inverse_foreign_keys,
+            upgrade=upgrade,
             **configs)
 
         self.collections_class = reference.load_object(collections_class)[0] if ':' in collections_class else eval(collections_class)
+        self.inverse_foreign_keys = inverse_foreign_keys
         self.alembic_config = {k: v for k, v in upgrade.items() if v is not None}
         self.configs = configs
 
@@ -130,7 +134,7 @@ class Database(plugin.Plugin):
 
                 self.populates.append(reference.load_object(populate)[0])
 
-        configure_mappers(self.collections_class)
+        configure_mappers(self.collections_class, self.inverse_foreign_keys)
 
     def create_all(self):
         for metadata in self.metadatas.values():
