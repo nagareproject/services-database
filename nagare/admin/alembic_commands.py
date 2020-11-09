@@ -27,11 +27,10 @@ class Config(config.Config):
 
     def get_template_directory(self):
         here = os.path.abspath(os.path.dirname(__file__))
-        return os.path.join(here, '..', 'templates')
+        return os.path.abspath(os.path.join(here, '..', 'templates'))
 
 
 class AlembicBaseCommand(command.Command):
-    ROOT = 'database_versions'
     WITH_STARTED_SERVICES = True
 
     def _set_arguments(self, parser):
@@ -59,6 +58,7 @@ class AlembicCommand(AlembicBaseCommand):
         super(AlembicCommand, self)._set_arguments(parser)
 
     def run(self, database_service, db=None, **params):
+        directory = database_service.alembic_config['directory']
         metadatas = database_service.metadatas
 
         if not db:
@@ -72,7 +72,7 @@ class AlembicCommand(AlembicBaseCommand):
         return super(AlembicCommand, self).run(
             database_service,
             {
-                'script_location': os.path.join(self.ROOT, db),
+                'script_location': os.path.join(directory, db),
                 'metadata': metadata,
                 'engine': metadata.bind,
             },
@@ -84,16 +84,18 @@ class Init(AlembicBaseCommand):
     DESC = 'initialize a new scripts directory'
 
     def run(self, database_service, services_service):
-        if os.path.exists(self.ROOT):
-            print("'{}' already exists".format(self.ROOT))
+        directory = database_service.alembic_config['directory']
+
+        if os.path.exists(directory):
+            print("'{}' already exists".format(directory))
         else:
-            os.mkdir(self.ROOT)
+            os.mkdir(directory)
 
             for name in database_service.metadatas:
                 try:
                     r = services_service(
                         super(Init, self).run,
-                        directory=os.path.join(self.ROOT, name),
+                        directory=os.path.join(directory, name),
                         template='alembic_nagare'
                     )
                     if r:
