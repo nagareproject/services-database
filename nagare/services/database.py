@@ -17,6 +17,7 @@ from alembic.migration import MigrationContext
 
 
 session = orm.scoped_session(orm.sessionmaker())
+query = session.query
 metadata = MetaData()
 
 
@@ -50,11 +51,12 @@ def configure_mappers(collections_class=set, inverse_foreign_keys=False):
 
 
 class Database(plugin.Plugin):
-    CONFIG_SPEC = {
-        'collections_class': 'string(default=set)',
-        'inverse_foreign_keys': 'boolean(default=False)',
+    CONFIG_SPEC = dict(
+        plugin.Plugin.CONFIG_SPEC,
+        collections_class='string(default=set)',
+        inverse_foreign_keys='boolean(default=False)',
 
-        '__many__': {  # Database sub-sections
+        __many__={  # Database sub-sections
             'activated': 'boolean(default=True)',
             'uri': 'string(default=None)',  # Database connection string
             'debug': 'boolean(default=False)',  # Set the database engine in debug mode?
@@ -69,7 +71,7 @@ class Database(plugin.Plugin):
             'populate': 'string(default="nagare.services.database:default_populate")'
         },
 
-        'upgrade': {
+        upgrade={
             'file_template': 'string(default=None)',
             'timezone': 'string(default=None)',
             'truncate_slug_length': 'integer(default=None)',
@@ -79,7 +81,7 @@ class Database(plugin.Plugin):
             'output_encoding': 'string(default=None)',
             'directory': 'string(default=$data/database_versions)'
         }
-    }
+    )
 
     def __init__(self, name, dist, collections_class, inverse_foreign_keys, upgrade, **configs):
         super(Database, self).__init__(
