@@ -301,7 +301,7 @@ class EntityMeta(database.EntityMetaBase):
 
 
 class _NagareEntity(object):
-    declarative_constructor = orm.declarative_base().__init__
+    declarative_constructor = getattr(orm.declarative_base().__init__, '__func__', orm.declarative_base().__init__)
 
     def __init__(self, auto_add=None, **kw):
         auto_add = self.using_options['auto_add'] if auto_add is None else auto_add
