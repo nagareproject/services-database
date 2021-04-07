@@ -7,7 +7,6 @@
 # this distribution.
 # --
 
-from sqlalchemy.ext import declarative
 from sqlalchemy import Column as Field
 from sqlalchemy import orm, Integer, ForeignKey, Table
 
@@ -26,7 +25,7 @@ class FKRelationship(database.FKRelationshipBase):
         self.relationship_kwargs = kw
 
     def target_cls(self, cls):
-        return cls._decl_class_registry.get(self.target)
+        return cls.registry._class_registry.get(self.target)
 
     def find_inverse(self, local_cls, key, target_cls):
         if self.inverse:
@@ -90,6 +89,7 @@ class FKRelationship(database.FKRelationshipBase):
         rel = orm.relationship(
             target_cls,
             collection_class=self.collection_class or collection_class,
+            overlaps=target_rel_name,
             **relationship_kwargs
         )
         setattr(local_cls, key, rel)
@@ -109,8 +109,8 @@ class OneToMany(FKRelationship):
         return ForeignKey(pk, onupdate=onupdate, ondelete=ondelete), kw
 
     @staticmethod
-    def create_foreign_field_params(index=True, nullable=True, **kw):
-        return {'index': index, 'nullable': nullable}, kw
+    def create_foreign_field_params(index=True, nullable=True, primary_key=False, **kw):
+        return {'index': index, 'nullable': nullable, 'primary_key': primary_key}, kw
 
     def create_foreign_field(self, foreign_key_name, pk, target_cls, key):
         foreign_field_params = target_cls.get_params_of_field(foreign_key_name)
@@ -276,7 +276,6 @@ class EntityMeta(database.EntityMetaBase):
     ):
         cls.metadata = metadata or database.metadata
         cls.session = session or database.session
-        cls.query = cls.session.query_property()
         cls.using_options = {
             'shortname': shortname,
             'auto_primarykey': auto_primarykey,
@@ -302,13 +301,14 @@ class EntityMeta(database.EntityMetaBase):
 
 
 class _NagareEntity(object):
+    declarative_constructor = orm.declarative_base().__init__
 
     def __init__(self, auto_add=None, **kw):
         auto_add = self.using_options['auto_add'] if auto_add is None else auto_add
         if auto_add:
             self.session.add(self)
 
-        declarative.api._declarative_constructor(self, **kw)
+        self.declarative_constructor(**kw)
 
     def set(self, **kw):
         for key, value in kw.items():
@@ -372,8 +372,9 @@ class _NagareEntity(object):
 # -----------------------------------------------------------------------------
 
 
-Entity = declarative.declarative_base(
+Entity = orm.declarative_base(
     name='Entity',
     metaclass=EntityMeta,
-    cls=_NagareEntity, constructor=_NagareEntity.__init__
+    cls=_NagareEntity,
+    constructor=_NagareEntity.__init__
 )

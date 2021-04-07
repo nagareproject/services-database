@@ -10,5 +10,5 @@
 # --
 
 from .pickle import NonSerializable  # noqa: F401
-from nagare.services.database import session, metadata, configure_mappers  # noqa: F401
+from nagare.services.database import session, metadata, query, configure_mappers  # noqa: F401
 from .declarative import Entity, Field, ManyToOne, OneToMany, ManyToMany, OneToOne  # noqa: F401

@@ -48,6 +48,7 @@ def configure_mappers(collections_class=set, inverse_foreign_keys=False):
     for cls in classes:
         if isinstance(cls, EntityMetaBase):
             cls.del_params_of_field()
+            cls.query = cls.session.query_property()
 
 
 class Database(plugin.Plugin):
