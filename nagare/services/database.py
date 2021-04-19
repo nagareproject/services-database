@@ -7,6 +7,11 @@
 # this distribution.
 # --
 
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
+
 import zope.sqlalchemy
 from sqlalchemy.ext import declarative
 from sqlalchemy import orm, event, MetaData, engine_from_config
@@ -117,10 +122,19 @@ class Database(plugin.Plugin):
 
         return engine_config
 
+    @staticmethod
+    def convert_uri(uri):
+        dialect, _, _ = urlparse.urlparse(uri).scheme.partition('+')
+        if dialect == 'postgres':
+            uri = 'postgresql' + uri[8:]
+
+        return uri
+
     def _configure_engine(self, name, engines, uri, debug, metadata, populate, **config):
         metadata = reference.load_object(metadata)[0]
 
         if uri:
+            uri = self.convert_uri(uri)
             key = (uri, frozenset(config.items()), debug)
             engine = engines.setdefault(key, engine_from_config(config, '', echo=debug, url=uri))
             metadata.bind = engine
