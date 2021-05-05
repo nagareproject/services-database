@@ -245,10 +245,13 @@ class EntityMeta(database.EntityMetaBase):
     def __new__(meta, name, bases, ns):
         options = ns.pop('using_options', {})
 
+        if bases and (bases[0].__name__ != '_NagareEntity'):
+            meta.update_ns(ns, **options)
+
         cls = super(EntityMeta, meta).__new__(meta, name, bases, ns)
 
         if bases and (bases[0].__name__ != '_NagareEntity'):
-            meta.set_options(cls, **options)
+            meta.set_tablename(cls, **options)
 
             cls.__relationships_params__ = {}
             for name, relationship in ns.items():
@@ -268,20 +271,27 @@ class EntityMeta(database.EntityMetaBase):
         del cls.__relationships_params__
 
     @staticmethod
-    def set_options(
-            cls,
+    def update_ns(
+            ns,
             metadata=None, session=None,
-            tablename=None, shortname=False,
-            auto_primarykey=True, auto_add=True
+            shortname=False,
+            auto_primarykey=True, auto_add=True,
+            **options
     ):
-        cls.metadata = metadata or database.metadata
-        cls.session = session or database.session
-        cls.using_options = {
+        ns['metadata'] = metadata or database.metadata
+        ns['session'] = session or database.session
+        ns['using_options'] = {
             'shortname': shortname,
             'auto_primarykey': auto_primarykey,
             'auto_add': auto_add
         }
 
+        if auto_primarykey:
+            primary_key_name = auto_primarykey if isinstance(auto_primarykey, (str, type(u''))) else 'id'
+            ns[primary_key_name] = Field(Integer, primary_key=True)
+
+    @staticmethod
+    def set_tablename(cls, tablename=None, shortname=False, **options):
         if not hasattr(cls, '__table__') and not hasattr(cls, '__tablename__'):
             if callable(tablename):
                 tablename = tablename(cls)
@@ -291,13 +301,6 @@ class EntityMeta(database.EntityMetaBase):
                 tablename = (tablename + cls.__name__).lower()
 
             cls.__tablename__ = tablename
-
-        if auto_primarykey:
-            setattr(
-                cls,
-                auto_primarykey if isinstance(auto_primarykey, (str, type(u''))) else 'id',
-                Field(Integer, primary_key=True)
-            )
 
 
 class _NagareEntity(object):
