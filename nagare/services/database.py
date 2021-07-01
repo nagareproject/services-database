@@ -85,7 +85,7 @@ class Database(plugin.Plugin):
             'sourceless': 'boolean(default=None)',
             'version_locations': 'string(default=None)',
             'output_encoding': 'string(default=None)',
-            'directory': 'string(default=$data/database_versions)'
+            'directory': 'string(default="$data/database_versions")'
         }
     )
 
