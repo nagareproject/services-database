@@ -106,7 +106,7 @@ class Database(plugin.Plugin):
         self.populates = []
 
     @staticmethod
-    def handle_interactive():
+    def handle_interaction():
         return {'session': session}
 
     @staticmethod
