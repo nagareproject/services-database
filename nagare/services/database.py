@@ -72,6 +72,8 @@ class Database(plugin.Plugin):
             'autocommit': 'boolean(default=False)',
             'expire_on_commit': 'boolean(default=True)',
             'twophases': 'boolean(default=False)',
+            'json_serializer': 'string(default=None)',
+            'json_deserializer': 'string(default=None)',
 
             'metadata': 'string(default="nagare.database:metadata")',  # Database metadata: database entities description
             'populate': 'string(default="nagare.services.database:default_populate")'
@@ -130,11 +132,28 @@ class Database(plugin.Plugin):
 
         return uri
 
-    def _configure_engine(self, name, engines, uri, debug, metadata, populate, **config):
+    def get_metadata(self, name):
+        return self.metadatas[name]
+
+    def get_engine(self, name):
+        return self.get_metadata(name).bind
+
+    def _configure_engine(
+            self,
+            name,
+            engines, uri, debug, metadata, populate,
+            json_serializer, json_deserializer, **config
+    ):
         metadata = reference.load_object(metadata)[0]
 
         if uri:
             uri = self.convert_uri(uri)
+
+            if json_serializer:
+                config['json_serializer'] = reference.load_object(json_serializer)[0]
+            if json_deserializer:
+                config['json_deserializer'] = reference.load_object(json_deserializer)[0]
+
             key = (uri, frozenset(config.items()), debug)
             engine = engines.setdefault(key, engine_from_config(config, '', echo=debug, url=uri))
             metadata.bind = engine
