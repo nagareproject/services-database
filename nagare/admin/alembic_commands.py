@@ -188,7 +188,7 @@ class Downgrade(Upgrade):
 
 
 class Current(AlembicCommand):
-    DESC = 'display the current revision for a database'
+    DESC = 'show the current revision for a database'
 
     def _set_arguments(self, parser):
         parser.add_argument(
@@ -199,7 +199,7 @@ class Current(AlembicCommand):
 
 
 class History(AlembicCommand):
-    DESC = 'upgrade to a later version'
+    DESC = 'list changeset scripts in chronological order'
 
     def _set_arguments(self, parser):
         parser.add_argument(
@@ -214,7 +214,7 @@ class History(AlembicCommand):
 
 
 class Branches(AlembicCommand):
-    DESC = 'display the current revision for a database'
+    DESC = 'show current branch points'
 
     def _set_arguments(self, parser):
         parser.add_argument(
