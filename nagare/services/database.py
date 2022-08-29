@@ -7,6 +7,13 @@
 # this distribution.
 # --
 
+import os
+
+try:
+    from ConfigParser import RawConfigParser
+except ImportError:
+    from configparser import RawConfigParser
+
 try:
     import urlparse
 except ImportError:
@@ -15,15 +22,31 @@ except ImportError:
 import zope.sqlalchemy
 from sqlalchemy.ext import declarative
 from sqlalchemy import orm, event, MetaData, engine_from_config
+from alembic import command, migration
+from alembic import config as alembic_config
 
 from nagare.services import plugin
 from nagare.server import reference
-from alembic.migration import MigrationContext
+
+from .database_exceptions import InvalidVersion
 
 
 session = orm.scoped_session(orm.sessionmaker())
 query = session.query
 metadata = MetaData()
+
+
+class AlembicConfig(alembic_config.Config):
+    def __init__(self, **config):
+        super(AlembicConfig, self).__init__()
+
+        self.file_config = RawConfigParser()
+        for k, v in config.items():
+            self.set_main_option(k, v)
+
+    def get_template_directory(self):
+        here = os.path.abspath(os.path.dirname(__file__))
+        return os.path.abspath(os.path.join(here, '..', 'templates'))
 
 
 class EntityMetaBase(declarative.DeclarativeMeta):
@@ -64,7 +87,7 @@ class Database(plugin.Plugin):
 
         __many__={  # Database sub-sections
             'activated': 'boolean(default=True)',
-            'uri': 'string(default=None)',  # Database connection string
+            'uri': 'string(default=None, help="Database connection string")',
             'debug': 'boolean(default=False)',  # Set the database engine in debug mode?
 
             'session': 'string(default="nagare.database:session")',
@@ -85,22 +108,34 @@ class Database(plugin.Plugin):
             'truncate_slug_length': 'integer(default=None)',
             'revision_environment': 'boolean(default=None)',
             'sourceless': 'boolean(default=None)',
-            'version_locations': 'string(default=None)',
             'output_encoding': 'string(default=None)',
-            'directory': 'string(default="$data/database_versions")'
+            'directory': 'string(default="$data/database_versions")',
+            'version_check': 'boolean(default=None)',
+            'version_validation': 'boolean(default=True)'
         }
     )
 
-    def __init__(self, name, dist, collections_class, inverse_foreign_keys, upgrade, **configs):
+    def __init__(
+        self,
+        name, dist,
+        collections_class,
+        inverse_foreign_keys,
+        upgrade,
+        reloader_service=None,
+        **configs
+    ):
         super(Database, self).__init__(
             name, dist,
             collections_class=collections_class,
             inverse_foreign_keys=inverse_foreign_keys,
-            upgrade=upgrade,
+            upgrade=upgrade.copy(),
             **configs)
 
         self.collections_class = reference.load_object(collections_class)[0] if ':' in collections_class else eval(collections_class)
         self.inverse_foreign_keys = inverse_foreign_keys
+        version_check = upgrade.pop('version_check')
+        self.version_check = (reloader_service is None) if version_check is None else version_check
+        self.version_validation = upgrade.pop('version_validation')
         self.alembic_config = {k: v for k, v in upgrade.items() if v is not None}
         self.configs = configs
 
@@ -131,6 +166,16 @@ class Database(plugin.Plugin):
             uri = 'postgresql' + uri[8:]
 
         return uri
+
+    def get_script_location(self, db):
+        return os.path.join(self.alembic_config['directory'], db)
+
+    def get_alembic_config(self, db, **config):
+        return AlembicConfig(**dict(
+            self.alembic_config,
+            script_location=self.get_script_location(db),
+            **config
+        ))
 
     def get_metadata(self, name):
         return self.metadatas[name]
@@ -173,6 +218,30 @@ class Database(plugin.Plugin):
 
         configure_mappers(self.collections_class, self.inverse_foreign_keys)
 
+    def handle_serve(self, app):
+        for name in self.configs:
+            script_location = self.get_script_location(name)
+            if self.version_check and os.access(script_location, os.F_OK):
+                alembic_config = self.get_alembic_config(name)
+                heads = command.ScriptDirectory.from_config(alembic_config).get_heads()
+
+                with self.get_engine(name).connect() as connection:
+                    migration_context = migration.MigrationContext.configure(connection)
+                    current_revision = migration_context.get_current_revision()
+
+                if current_revision is None:
+                    msg = 'Database version missing'
+                elif current_revision not in heads:
+                    msg = 'Database version not a revisions head'
+                else:
+                    msg = None
+
+                if msg:
+                    if self.version_validation:
+                        raise InvalidVersion(msg)
+                    else:
+                        self.logger.error(msg)
+
     def create_all(self):
         for metadata in self.metadatas.values():
             metadata.create_all()
@@ -181,7 +250,7 @@ class Database(plugin.Plugin):
         for metadata in self.metadatas.values():
             engine = metadata.bind
 
-            alembic = MigrationContext.configure(url=engine.url)
+            alembic = migration.MigrationContext.configure(url=engine.url)
             alembic._version.drop(engine.connect(), checkfirst=True)
 
             metadata.drop_all()

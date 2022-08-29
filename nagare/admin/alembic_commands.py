@@ -8,26 +8,9 @@
 # --
 
 import os
-try:
-    from ConfigParser import RawConfigParser
-except ImportError:
-    from configparser import RawConfigParser
 
 from nagare.admin import command
-from alembic import config, util, command as alembic_command
-
-
-class Config(config.Config):
-    def __init__(self, **config):
-        super(Config, self).__init__()
-
-        self.file_config = RawConfigParser()
-        for k, v in config.items():
-            self.set_main_option(k, v)
-
-    def get_template_directory(self):
-        here = os.path.abspath(os.path.dirname(__file__))
-        return os.path.abspath(os.path.join(here, '..', 'templates'))
+from alembic import util, command as alembic_command
 
 
 class AlembicBaseCommand(command.Command):
@@ -41,7 +24,7 @@ class AlembicBaseCommand(command.Command):
         super(AlembicBaseCommand, self).set_arguments(parser)
 
     def run(self, database_service, config=None, **params):
-        cfg = Config(**dict(config or {}, **database_service.alembic_config))
+        cfg = database_service.get_alembic_config(**config)
 
         try:
             getattr(alembic_command, self.__class__.__name__.lower())(cfg, **params)
@@ -58,7 +41,6 @@ class AlembicCommand(AlembicBaseCommand):
         super(AlembicCommand, self)._set_arguments(parser)
 
     def run(self, database_service, db=None, **params):
-        directory = database_service.alembic_config['directory']
         metadatas = database_service.metadatas
 
         if not db:
@@ -71,11 +53,7 @@ class AlembicCommand(AlembicBaseCommand):
 
         return super(AlembicCommand, self).run(
             database_service,
-            {
-                'script_location': os.path.join(directory, db),
-                'metadata': metadata,
-                'engine': metadata.bind,
-            },
+            {'db': db, 'metadata': metadata, 'engine': metadata.bind},
             **params
         )
 

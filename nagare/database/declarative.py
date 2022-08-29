@@ -34,7 +34,7 @@ class FKRelationship(database.FKRelationshipBase):
             target_rels = [
                 (name, rel)
                 for name, rel in target_cls.__dict__.items()
-                if(
+                if (
                     isinstance(rel, FKRelationship) and (
                         self.RELATIONSHIP_NAME in rel.INVERSE_RELATIONSHIP_NAME
                     ) and (
