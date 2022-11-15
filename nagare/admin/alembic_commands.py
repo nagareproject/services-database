@@ -10,7 +10,7 @@
 import os
 
 from nagare.admin import command
-from alembic import util, command as alembic_command
+from alembic import command as alembic_command
 
 
 class AlembicBaseCommand(command.Command):
@@ -26,12 +26,7 @@ class AlembicBaseCommand(command.Command):
     def run(self, database_service, config=None, **params):
         cfg = database_service.get_alembic_config(**config)
 
-        try:
-            getattr(alembic_command, self.__class__.__name__.lower())(cfg, **params)
-            return 0
-        except util.exc.CommandError as e:
-            print('FAILED: {}'.format(str(e)))
-            return 1
+        getattr(alembic_command, self.__class__.__name__.lower())(cfg, **params)
 
 
 class AlembicCommand(AlembicBaseCommand):
