@@ -170,10 +170,10 @@ class Database(plugin.Plugin):
     def get_script_location(self, db):
         return os.path.join(self.alembic_config['directory'], db)
 
-    def get_alembic_config(self, db, **config):
+    def get_alembic_config(self, db=None, **config):
         return AlembicConfig(**dict(
             self.alembic_config,
-            script_location=self.get_script_location(db),
+            script_location=self.get_script_location(db) if db is not None else None,
             **config
         ))
 

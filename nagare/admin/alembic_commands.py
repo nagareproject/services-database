@@ -23,7 +23,7 @@ class AlembicBaseCommand(command.Command):
         self._set_arguments(parser)
         super(AlembicBaseCommand, self).set_arguments(parser)
 
-    def run(self, database_service, config=None, **params):
+    def run(self, database_service, config, **params):
         cfg = database_service.get_alembic_config(**config)
 
         getattr(alembic_command, self.__class__.__name__.lower())(cfg, **params)
@@ -68,6 +68,7 @@ class Init(AlembicBaseCommand):
                 try:
                     r = services_service(
                         super(Init, self).run,
+                        config={},
                         directory=os.path.join(directory, name),
                         template='alembic_nagare'
                     )
