@@ -23,7 +23,7 @@ authors = [
 license = {file = 'LICENSE.txt'}
 requires-python = '>=3.7'
 dependencies = [
-    'SQLAlchemy',
+    'SQLAlchemy<2.0.0',
     'alembic',
     'zope.sqlalchemy',
     'nagare-services-transaction',
