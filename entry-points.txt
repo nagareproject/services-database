@@ -1,0 +1,20 @@
+[nagare.commands]
+db = nagare.admin.database_commands:Commands
+
+[nagare.commands.db]
+create = nagare.admin.database_commands:Create
+drop = nagare.admin.database_commands:Drop
+init = nagare.admin.alembic_commands:Init
+stamp = nagare.admin.alembic_commands:Stamp
+revision = nagare.admin.alembic_commands:Revision
+upgrade = nagare.admin.alembic_commands:Upgrade
+downgrade = nagare.admin.alembic_commands:Downgrade
+current = nagare.admin.alembic_commands:Current
+history = nagare.admin.alembic_commands:History
+branches = nagare.admin.alembic_commands:Branches
+heads = nagare.admin.alembic_commands:Heads
+merge = nagare.admin.alembic_commands:Merge
+show = nagare.admin.alembic_commands:Show
+
+[nagare.services]
+database = nagare.services.database:Database

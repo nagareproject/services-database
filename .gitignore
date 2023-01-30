@@ -1,22 +1,28 @@
-*.pyc
-*.pyo
+syntax: glob
+*.py[co]
 *.orig
 *.rej
 *.egg-info
-dist
+*.eggs
+/dist
+/build
 *.db
 *.log
+*.log.*
 *.mo
+*.local.*
 .DS_Store
 .project
 .pydevproject
 .settings
 .idea
-.coverage
-.eggs
-*.swp
-build
-dist
+.vscode
+.~*
+~*
 htmlcov
-nbproject
+.coverage
+/public
+.ruff_cache
+/.user-env
+/doc/_build
 

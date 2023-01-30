@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2022 Net-ng.
+# Copyright (c) 2008-2023 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -11,9 +11,8 @@ from __future__ import absolute_import
 
 from pickle import PicklingError
 
-from sqlalchemy import event, orm
-
 from nagare.services import database
+from sqlalchemy import event, orm
 
 
 class NonSerializable(object):
@@ -22,7 +21,7 @@ class NonSerializable(object):
 
 
 def entity_getstate(entity):
-    """Return the state of an SQLAlchemy entity
+    """Return the state of an SQLAlchemy entity.
 
     In:
       - ``entity`` -- the SQLAlchemy entity
@@ -48,7 +47,7 @@ def entity_getstate(entity):
 
 
 def entity_setstate(entity, d):
-    """Set the state of an SQLAlchemy entity
+    """Set the state of an SQLAlchemy entity.
 
     In:
       - ``entity`` -- the newly created and not yet initialized SQLAlchemy entity

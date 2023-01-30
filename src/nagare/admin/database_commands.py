@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2022 Net-ng.
+# Copyright (c) 2008-2023 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -7,9 +7,8 @@
 # this distribution.
 # --
 
-import transaction
-
 from nagare.admin import command
+import transaction
 
 
 class Commands(command.Commands):
@@ -23,10 +22,7 @@ class Create(command.Command):
     def set_arguments(self, parser):
         super(Create, self).set_arguments(parser)
 
-        parser.add_argument(
-            '--drop', action='store_true',
-            help='drop the database tables before to re-create them'
-        )
+        parser.add_argument('--drop', action='store_true', help='drop the database tables before to re-create them')
 
     @staticmethod
     def run(database_service, application_service, services_service, drop=False):

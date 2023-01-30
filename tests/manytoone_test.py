@@ -1,7 +1,7 @@
 # Encoding: utf-8
 
 # --
-# Copyright (c) 2008-2022 Net-ng.
+# Copyright (c) 2008-2023 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -79,7 +79,7 @@ def test1():
 def test2():
     parent = Parent2_2(name='manytoone_test2')
     child1 = Child2_2(name='manytoone_test2_1', parent=parent)
-    child2 = Child2_2(name='manytoone_test2_2', )
+    child2 = Child2_2(name='manytoone_test2_2')
     child2.parent = parent
 
     session.commit()

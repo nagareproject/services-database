@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2022 Net-ng.
+# Copyright (c) 2008-2023 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -57,7 +57,7 @@ def test_1():
 
 
 def test_2():
-    """ database - simple test with sqlalchemy/elixir unicode test """
+    """database - simple test with sqlalchemy/elixir unicode test"""
     file_path = os.path.join(os.path.dirname(__file__), 'helloworld.csv')
     try:
         f = open(file_path, 'r', encoding='utf-8')
@@ -81,7 +81,7 @@ def test_2():
 
 
 def test4():
-    """ database - test children relation with sqlalchemy/elixir """
+    """database - test children relation with sqlalchemy/elixir"""
     f = Father(name=u'Father')
 
     c1 = Child(name=u'Child1')

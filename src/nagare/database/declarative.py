@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2022 Net-ng.
+# Copyright (c) 2008-2023 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -7,10 +7,9 @@
 # this distribution.
 # --
 
-from sqlalchemy import Column as Field
-from sqlalchemy import orm, Integer, ForeignKey, Table
-
 from nagare.services import database
+from sqlalchemy import Column as Field
+from sqlalchemy import ForeignKey, Integer, Table, orm
 
 
 class FKRelationship(database.FKRelationshipBase):
@@ -35,11 +34,9 @@ class FKRelationship(database.FKRelationshipBase):
                 (name, rel)
                 for name, rel in target_cls.__dict__.items()
                 if (
-                    isinstance(rel, FKRelationship) and (
-                        self.RELATIONSHIP_NAME in rel.INVERSE_RELATIONSHIP_NAME
-                    ) and (
-                        rel.target_cls(target_cls) is local_cls
-                    )
+                    isinstance(rel, FKRelationship)
+                    and (self.RELATIONSHIP_NAME in rel.INVERSE_RELATIONSHIP_NAME)
+                    and (rel.target_cls(target_cls) is local_cls)
                 )
             ]
 
@@ -49,10 +46,8 @@ class FKRelationship(database.FKRelationshipBase):
             if (len(rels_with_inverse) > 1) or (not rels_with_inverse and (len(rels_without_inverse) > 1)):
                 raise ValueError(
                     "Several relations in entity '{}' match as inverse of the '{}' relation in entity '{}'. "
-                    "You should specify inverse relations manually by using the inverse keyword.".format(
-                        target_cls.__name__,
-                        key,
-                        local_cls.__name__
+                    'You should specify inverse relations manually by using the inverse keyword.'.format(
+                        target_cls.__name__, key, local_cls.__name__
                     )
                 )
 
@@ -74,23 +69,19 @@ class FKRelationship(database.FKRelationshipBase):
 
         target_rel_name, target_rel = self.find_inverse(local_cls, key, target_cls)
         backref_uselist, relationship_kwargs = self._config(
-            inverse_foreign_keys,
-            local_cls, target_cls,
-            key, target_rel_name
+            inverse_foreign_keys, local_cls, target_cls, key, target_rel_name
         )
 
         if (target_rel_name is not None) and (target_rel is None):
             relationship_kwargs['backref'] = orm.backref(
-                target_rel_name,
-                uselist=backref_uselist,
-                collection_class=self.collection_class or collection_class
+                target_rel_name, uselist=backref_uselist, collection_class=self.collection_class or collection_class
             )
 
         rel = orm.relationship(
             target_cls,
             collection_class=self.collection_class or collection_class,
             overlaps=target_rel_name,
-            **relationship_kwargs
+            **relationship_kwargs,
         )
         setattr(local_cls, key, rel)
 
@@ -99,7 +90,7 @@ class FKRelationship(database.FKRelationshipBase):
 
 
 class OneToMany(FKRelationship):
-    """Generates a one to many relationship"""
+    """Generates a one to many relationship."""
 
     RELATIONSHIP_NAME = 'OneToMany'
     INVERSE_RELATIONSHIP_NAME = ('ManyToOne',)
@@ -134,7 +125,7 @@ class OneToMany(FKRelationship):
 
 
 class ManyToOne(OneToMany):
-    """Generates a many to one relationship"""
+    """Generates a many to one relationship."""
 
     RELATIONSHIP_NAME = 'ManyToOne'
     INVERSE_RELATIONSHIP_NAME = ('OneToMany', 'OneToOne')
@@ -150,7 +141,7 @@ class ManyToOne(OneToMany):
 
 
 class OneToOne(OneToMany):
-    """Generates a one to one relationship"""
+    """Generates a one to one relationship."""
 
     RELATIONSHIP_NAME = 'OneToOne'
     INVERSE_RELATIONSHIP_NAME = ('ManyToOne',)
@@ -167,17 +158,22 @@ class OneToOne(OneToMany):
 
 
 class ManyToMany(FKRelationship):
-    """Generates a many to many relationship"""
+    """Generates a many to many relationship."""
 
     RELATIONSHIP_NAME = 'ManyToMany'
     INVERSE_RELATIONSHIP_NAME = ('ManyToMany',)
 
     def __init__(
-            self,
-            target,
-            tablename=None, local_colname=None, remote_colname=None, table=None, table_kwargs=None,
-            inverse=None, collection_class=None,
-            **kw
+        self,
+        target,
+        tablename=None,
+        local_colname=None,
+        remote_colname=None,
+        table=None,
+        table_kwargs=None,
+        inverse=None,
+        collection_class=None,
+        **kw,
     ):
         super(ManyToMany, self).__init__(target, '', inverse, collection_class, **kw)
 
@@ -207,9 +203,9 @@ class ManyToMany(FKRelationship):
                 tablename = (source_part, target_part)
 
         local_pk = list(local_cls.__table__.primary_key)[0]
-        local_pk_name = (local_pk.table.description + '_' + local_pk.description)
+        local_pk_name = local_pk.table.description + '_' + local_pk.description
         target_pk = list(target_cls.__table__.primary_key)[0]
-        target_pk_name = (target_pk.table.description + '_' + target_pk.description)
+        target_pk_name = target_pk.table.description + '_' + target_pk.description
 
         foreign_field_params1 = target_cls.get_params_of_field(target_rel_name)
         foreign_key1, foreign_field_params1 = self.create_foreign_key(target_pk, **foreign_field_params1)
@@ -224,19 +220,23 @@ class ManyToMany(FKRelationship):
         if inverse_foreign_keys:
             foreign_name1, foreign_name2 = foreign_name2, foreign_name1
 
-        table = self.table or Table(
-            '{}__{}'.format(*tablename),
-            local_cls.metadata,
-            Field(foreign_name1, foreign_key1, **foreign_field_params1),
-            Field(foreign_name2, foreign_key2, **foreign_field_params2),
-
-            keep_existing=True,
-            **self.table_kwargs
+        table = (
+            self.table
+            if self.table is not None
+            else Table(
+                '{}__{}'.format(*tablename),
+                local_cls.metadata,
+                Field(foreign_name1, foreign_key1, **foreign_field_params1),
+                Field(foreign_name2, foreign_key2, **foreign_field_params2),
+                keep_existing=True,
+                **self.table_kwargs,
+            )
         )
 
         kw['secondary'] = table
 
         return True, kw
+
 
 # -----------------------------------------------------------------------------
 
@@ -271,20 +271,10 @@ class EntityMeta(database.EntityMetaBase):
         del cls.__relationships_params__
 
     @staticmethod
-    def update_ns(
-            ns,
-            metadata=None, session=None,
-            shortname=False,
-            auto_primarykey=True, auto_add=True,
-            **options
-    ):
+    def update_ns(ns, metadata=None, session=None, shortname=False, auto_primarykey=True, auto_add=True, **options):
         ns['metadata'] = metadata or database.metadata
         ns['session'] = session or database.session
-        ns['using_options'] = {
-            'shortname': shortname,
-            'auto_primarykey': auto_primarykey,
-            'auto_add': auto_add
-        }
+        ns['using_options'] = {'shortname': shortname, 'auto_primarykey': auto_primarykey, 'auto_add': auto_add}
 
         if auto_primarykey:
             primary_key_name = auto_primarykey if isinstance(auto_primarykey, (str, type(u''))) else 'id'
@@ -372,12 +362,10 @@ class _NagareEntity(object):
     def exists(cls, **kw):
         return cls.query.filter(cls.query.filter_by(**kw).exists()).count()
 
+
 # -----------------------------------------------------------------------------
 
 
 Entity = orm.declarative_base(
-    name='Entity',
-    metaclass=EntityMeta,
-    cls=_NagareEntity,
-    constructor=_NagareEntity.__init__
+    name='Entity', metaclass=EntityMeta, cls=_NagareEntity, constructor=_NagareEntity.__init__
 )

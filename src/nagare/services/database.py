@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2022 Net-ng.
+# Copyright (c) 2008-2023 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -19,17 +19,15 @@ try:
 except ImportError:
     import urllib.parse as urlparse
 
-import zope.sqlalchemy
-from sqlalchemy.ext import declarative
-from sqlalchemy import orm, event, MetaData, engine_from_config
 from alembic import command, migration
 from alembic import config as alembic_config
-
-from nagare.services import plugin
 from nagare.server import reference
+from nagare.services import plugin
+from sqlalchemy import MetaData, engine_from_config, event, orm
+from sqlalchemy.ext import declarative
+import zope.sqlalchemy
 
 from .database_exceptions import InvalidVersion
-
 
 session = orm.scoped_session(orm.sessionmaker())
 query = session.query
@@ -84,12 +82,10 @@ class Database(plugin.Plugin):
         plugin.Plugin.CONFIG_SPEC,
         collections_class='string(default=set)',
         inverse_foreign_keys='boolean(default=False)',
-
         __many__={  # Database sub-sections
             'activated': 'boolean(default=True)',
             'uri': 'string(default=None, help="Database connection string")',
             'debug': 'boolean(default=False)',  # Set the database engine in debug mode?
-
             'session': 'string(default="nagare.database:session")',
             'autoflush': 'boolean(default=True)',
             'autocommit': 'boolean(default=False)',
@@ -97,11 +93,9 @@ class Database(plugin.Plugin):
             'twophases': 'boolean(default=False)',
             'json_serializer': 'string(default=None)',
             'json_deserializer': 'string(default=None)',
-
-            'metadata': 'string(default="nagare.database:metadata")',  # Database metadata: database entities description
-            'populate': 'string(default="nagare.services.database:default_populate")'
+            'metadata': 'string(default="nagare.database:metadata")',  # Database metadata: entities description
+            'populate': 'string(default="nagare.services.database:default_populate")',
         },
-
         upgrade={
             'file_template': 'string(default=None)',
             'timezone': 'string(default=None)',
@@ -111,27 +105,23 @@ class Database(plugin.Plugin):
             'output_encoding': 'string(default=None)',
             'directory': 'string(default="$data/database_versions")',
             'version_check': 'boolean(default=None)',
-            'version_validation': 'boolean(default=True)'
-        }
+            'version_validation': 'boolean(default=True)',
+        },
     )
 
-    def __init__(
-        self,
-        name, dist,
-        collections_class,
-        inverse_foreign_keys,
-        upgrade,
-        reloader_service=None,
-        **configs
-    ):
+    def __init__(self, name, dist, collections_class, inverse_foreign_keys, upgrade, reloader_service=None, **configs):
         super(Database, self).__init__(
-            name, dist,
+            name,
+            dist,
             collections_class=collections_class,
             inverse_foreign_keys=inverse_foreign_keys,
             upgrade=upgrade.copy(),
-            **configs)
+            **configs,
+        )
 
-        self.collections_class = reference.load_object(collections_class)[0] if ':' in collections_class else eval(collections_class)
+        self.collections_class = (
+            reference.load_object(collections_class)[0] if ':' in collections_class else eval(collections_class)
+        )
         self.inverse_foreign_keys = inverse_foreign_keys
         version_check = upgrade.pop('version_check')
         self.version_check = (reloader_service is None) if version_check is None else version_check
@@ -150,9 +140,7 @@ class Database(plugin.Plugin):
     def _configure_session(session, autoflush, autocommit, expire_on_commit, twophases, **engine_config):
         session = reference.load_object(session)[0]
         session.configure(
-            autoflush=autoflush, autocommit=autocommit,
-            expire_on_commit=expire_on_commit,
-            twophase=twophases
+            autoflush=autoflush, autocommit=autocommit, expire_on_commit=expire_on_commit, twophase=twophases
         )
 
         zope.sqlalchemy.register(session)
@@ -171,11 +159,11 @@ class Database(plugin.Plugin):
         return os.path.join(self.alembic_config['directory'], db)
 
     def get_alembic_config(self, db=None, **config):
-        return AlembicConfig(**dict(
-            self.alembic_config,
-            script_location=self.get_script_location(db) if db is not None else None,
-            **config
-        ))
+        return AlembicConfig(
+            **dict(
+                self.alembic_config, script_location=self.get_script_location(db) if db is not None else None, **config
+            )
+        )
 
     def get_metadata(self, name):
         return self.metadatas[name]
@@ -184,10 +172,7 @@ class Database(plugin.Plugin):
         return self.get_metadata(name).bind
 
     def _configure_engine(
-            self,
-            name,
-            engines, uri, debug, metadata, populate,
-            json_serializer, json_deserializer, **config
+        self, name, engines, uri, debug, metadata, populate, json_serializer, json_deserializer, **config
     ):
         metadata = reference.load_object(metadata)[0]
 
