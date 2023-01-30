@@ -21,6 +21,14 @@ authors = [
     {email = 'contact@net-ng.com'}
 ]
 license = {file = 'LICENSE.txt'}
+requires-python = '>=3.7'
+dependencies = [
+    'SQLAlchemy',
+    'alembic',
+    'zope.sqlalchemy',
+    'nagare-services-transaction',
+    'nagare-server'
+]
 
 [project.readme]
 file = 'README.rst'
