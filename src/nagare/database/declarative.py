@@ -196,11 +196,10 @@ class ManyToMany(FKRelationship):
         if not tablename:
             source_part = (local_cls.__tablename__ + '_' + key).lower()
             target_part = (target_cls.__tablename__ + ('_' + target_rel_name if target_rel_name else '')).lower()
-
             if target_rel_name and (source_part < target_part):
-                tablename = (target_part, source_part)
-            else:
-                tablename = (source_part, target_part)
+                source_part, target_part = target_part, source_part
+
+            tablename = source_part + '__' + target_part
 
         local_pk = list(local_cls.__table__.primary_key)[0]
         local_pk_name = local_pk.table.description + '_' + local_pk.description
@@ -224,7 +223,7 @@ class ManyToMany(FKRelationship):
             self.table
             if self.table is not None
             else Table(
-                '{}__{}'.format(*tablename),
+                tablename,
                 local_cls.metadata,
                 Field(foreign_name1, foreign_key1, **foreign_field_params1),
                 Field(foreign_name2, foreign_key2, **foreign_field_params2),
@@ -323,6 +322,10 @@ class _NagareEntity(object):
         return orm.object_session(self).expunge(self, *args, **kw)
 
     @classmethod
+    def subquery(cls, name=None, with_labels=False, reduce_columns=False):
+        return cls.query.subquery(name, with_labels, reduce_columns)
+
+    @classmethod
     def count(cls):
         return cls.query.count()
 
@@ -361,6 +364,46 @@ class _NagareEntity(object):
     @classmethod
     def exists(cls, **kw):
         return cls.query.filter(cls.query.filter_by(**kw).exists()).count()
+
+    @classmethod
+    def join(cls, *tables):
+        return cls.query.join(*tables)
+
+    @classmethod
+    def outerjoin(cls, target, *props, **kwargs):
+        return cls.query.outerjoin(target, *props, **kwargs)
+
+    @classmethod
+    def distinct(cls, *expr):
+        return cls.query.distinct(*expr)
+
+    @classmethod
+    def group_by(cls, *clauses):
+        return cls.query.group_by(*clauses)
+
+    @classmethod
+    def order_by(cls, *clauses):
+        return cls.query.order_by(*clauses)
+
+    @classmethod
+    def having(cls, criterion):
+        return cls.query.having(criterion)
+
+    @classmethod
+    def limit(cls, nb):
+        return cls.query.limit(nb)
+
+    @classmethod
+    def offset(cls, nb):
+        return cls.query.offset(nb)
+
+    @classmethod
+    def union(cls, *q):
+        return cls.query.union(*q)
+
+    @classmethod
+    def where(cls, *criterion):
+        return cls.query.where(*criterion)
 
 
 # -----------------------------------------------------------------------------

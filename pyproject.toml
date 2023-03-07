@@ -81,4 +81,5 @@ known-third-party = ['nagare']
 force-sort-within-sections = true
 
 [tool.pytest.ini_options]
+addopts = '-p no:warnings'
 testpaths = ['tests']
