@@ -23,6 +23,10 @@ class FKRelationship(database.FKRelationshipBase):
         self.collection_class = collection_class
         self.relationship_kwargs = kw
 
+    @staticmethod
+    def create_foreign_key(pk, name=None, onupdate=None, ondelete=None, **kw):
+        return ForeignKey(pk, name=name, onupdate=onupdate, ondelete=ondelete), kw
+
     def target_cls(self, cls):
         return cls.registry._class_registry.get(self.target)
 
@@ -94,10 +98,6 @@ class OneToMany(FKRelationship):
 
     RELATIONSHIP_NAME = 'OneToMany'
     INVERSE_RELATIONSHIP_NAME = ('ManyToOne',)
-
-    @staticmethod
-    def create_foreign_key(pk, onupdate=None, ondelete=None, **kw):
-        return ForeignKey(pk, onupdate=onupdate, ondelete=ondelete), kw
 
     @staticmethod
     def create_foreign_field_params(index=True, nullable=True, primary_key=False, **kw):
@@ -182,10 +182,6 @@ class ManyToMany(FKRelationship):
         self.remote_colname = remote_colname
         self.table = table
         self.table_kwargs = table_kwargs or {}
-
-    @staticmethod
-    def create_foreign_key(pk, onupdate=None, ondelete=None, **kw):
-        return ForeignKey(pk, onupdate=onupdate, ondelete=ondelete), kw
 
     @staticmethod
     def create_foreign_field_params(index=True, nullable=False, primary_key=True, **kw):
