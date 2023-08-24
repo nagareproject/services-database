@@ -45,6 +45,7 @@ dev = [
     'build',
     'twine',
 ]
+cli = ['nagare-commands-database-cli']
 
 [project.urls]
 Homepage = 'https://nagare.org'
