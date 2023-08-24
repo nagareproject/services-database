@@ -9,7 +9,7 @@
 # this distribution.
 # --
 
-from nagare.services.database import configure_mappers, metadata, query, session  # noqa: F401
+from nagare.services.database import configure_database, configure_mappers, metadata, query, session  # noqa: F401
 from nagare.services.database_exceptions import InvalidVersion  # noqa: F401
 
 from .declarative import Entity, Field, ManyToMany, ManyToOne, OneToMany, OneToOne  # noqa: F401

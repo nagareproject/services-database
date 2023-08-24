@@ -11,10 +11,10 @@
 
 import pytest
 
-from sqlalchemy import create_engine, Text
+from sqlalchemy import Text
 
-from nagare.database import metadata, session, configure_mappers
-from nagare.database.declarative import Entity, Field, OneToMany, ManyToOne
+from nagare.database import configure_database, metadata, session, configure_mappers
+from nagare.database import Entity, Field, OneToMany, ManyToOne
 
 
 class Parent1_1(Entity):
@@ -57,8 +57,8 @@ class Child1_4(Entity):
 
 configure_mappers(list)
 
-metadata.bind = create_engine('sqlite://', echo=False)
-metadata.create_all()
+engine = configure_database('sqlite://')
+metadata.create_all(engine)
 
 
 def test1():

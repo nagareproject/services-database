@@ -10,17 +10,11 @@
 import os
 
 try:
-    from ConfigParser import RawConfigParser
-except ImportError:
-    from configparser import RawConfigParser
-
-try:
     import urlparse
 except ImportError:
     import urllib.parse as urlparse
 
-from alembic import command, migration
-from alembic import config as alembic_config
+from nagare.admin.alembic_commands import drop_version, get_current_revision, get_heads
 from nagare.server import reference
 from nagare.services import plugin
 from sqlalchemy import MetaData, engine_from_config, event, orm
@@ -29,22 +23,54 @@ import zope.sqlalchemy
 
 from .database_exceptions import InvalidVersion
 
-session = orm.scoped_session(orm.sessionmaker())
+
+class Session(orm.Session):
+    metadatas = {}
+
+    def get_bind(self, mapper, **kw):
+        metadata = get_metadata(mapper.class_)
+
+        return self.metadatas[metadata] if metadata is not None else super().get_bind(mapper, **kw)
+
+
+def get_metadata(cls):
+    return getattr(cls, 'metadata', None)
+
+
+def get_metadatas():
+    return list(Session.metadatas)
+
+
+def get_engine(metadata):
+    return Session.metadatas.get(metadata)
+
+
+session = orm.scoped_session(orm.sessionmaker(class_=Session, future=True))
 query = session.query
 metadata = MetaData()
 
 
-class AlembicConfig(alembic_config.Config):
-    def __init__(self, **config):
-        super(AlembicConfig, self).__init__()
+def configure_database(
+    uri, name=None, metadata=metadata, debug=False, json_serializer=None, json_deserializer=None, **config
+):
+    if not isinstance(metadata, MetaData):
+        metadata = reference.load_object(metadata)[0]
 
-        self.file_config = RawConfigParser()
-        for k, v in config.items():
-            self.set_main_option(k, v)
+    if name is not None:
+        metadata.name = name
 
-    def get_template_directory(self):
-        here = os.path.abspath(os.path.dirname(__file__))
-        return os.path.abspath(os.path.join(here, '..', 'templates'))
+    dialect, _, _ = urlparse.urlparse(uri).scheme.partition('+')
+    if dialect == 'postgres':
+        uri = 'postgresql' + uri[8:]
+
+    if json_serializer:
+        config['json_serializer'] = reference.load_object(json_serializer)[0]
+    if json_deserializer:
+        config['json_deserializer'] = reference.load_object(json_deserializer)[0]
+
+    Session.metadatas[metadata] = engine = engine_from_config(config, '', echo=debug, url=uri, future=True)
+
+    return engine
 
 
 class EntityMetaBase(declarative.DeclarativeMeta):
@@ -62,7 +88,7 @@ def default_populate(app):
 def configure_mappers(collections_class=set, inverse_foreign_keys=False):
     classes = []
 
-    @event.listens_for(orm.mapper, 'mapper_configured')
+    @event.listens_for(orm.Mapper, 'mapper_configured')
     def config(mapper, cls):
         classes.append(cls)
         for key, value in list(cls.__dict__.items()):
@@ -84,7 +110,7 @@ class Database(plugin.Plugin):
         inverse_foreign_keys='boolean(default=False)',
         __many__={  # Database sub-sections
             'activated': 'boolean(default=True)',
-            'uri': 'string(default=None, help="Database connection string")',
+            'uri': 'string(help="Database connection string")',
             'debug': 'boolean(default=False)',  # Set the database engine in debug mode?
             'session': 'string(default="nagare.database:session")',
             'autoflush': 'boolean(default=True)',
@@ -129,8 +155,17 @@ class Database(plugin.Plugin):
         self.alembic_config = {k: v for k, v in upgrade.items() if v is not None}
         self.configs = configs
 
-        self.metadatas = {}
-        self.populates = []
+        self.location = (
+            os.path.join(dist.editable_project_location, 'src') if dist.editable_project_location else dist.location
+        )
+        self.populates = {}
+
+    get_metadata = staticmethod(get_metadata)
+    get_engine = staticmethod(get_engine)
+
+    @property
+    def metadatas(self):
+        return get_metadatas()
 
     @staticmethod
     def handle_interaction():
@@ -147,99 +182,50 @@ class Database(plugin.Plugin):
 
         return engine_config
 
-    @staticmethod
-    def convert_uri(uri):
-        dialect, _, _ = urlparse.urlparse(uri).scheme.partition('+')
-        if dialect == 'postgres':
-            uri = 'postgresql' + uri[8:]
-
-        return uri
-
-    def get_script_location(self, db):
-        return os.path.join(self.alembic_config['directory'], db)
-
-    def get_alembic_config(self, db=None, **config):
-        return AlembicConfig(
-            **dict(
-                self.alembic_config, script_location=self.get_script_location(db) if db is not None else None, **config
-            )
-        )
-
-    def get_metadata(self, name):
-        return self.metadatas[name]
-
-    def get_engine(self, name):
-        return self.get_metadata(name).bind
-
-    def _configure_engine(
-        self, name, engines, uri, debug, metadata, populate, json_serializer, json_deserializer, **config
-    ):
-        metadata = reference.load_object(metadata)[0]
-
-        if uri:
-            uri = self.convert_uri(uri)
-
-            if json_serializer:
-                config['json_serializer'] = reference.load_object(json_serializer)[0]
-            if json_deserializer:
-                config['json_deserializer'] = reference.load_object(json_deserializer)[0]
-
-            key = (uri, frozenset(config.items()), debug)
-            engine = engines.setdefault(key, engine_from_config(config, '', echo=debug, url=uri))
-            metadata.bind = engine
-
-        self.metadatas[name] = metadata
-
-        return populate
-
     def handle_start(self, app):
-        engines = {}
         for name, config in self.configs.items():
-            if config.pop('activated'):
-                engine_config = self._configure_session(**config)
-                populate = self._configure_engine(name, engines, **engine_config)
+            if isinstance(config, dict) and config.pop('activated'):
+                populate = config.pop('populate')
+                self.populates[name] = reference.load_object(populate)[0]
 
-                self.populates.append(reference.load_object(populate)[0])
+                engine_config = self._configure_session(**config)
+                configure_database(name=name, **engine_config)
 
         configure_mappers(self.collections_class, self.inverse_foreign_keys)
 
     def handle_serve(self, app):
-        for name in self.configs:
-            script_location = self.get_script_location(name)
-            if self.version_check and os.access(script_location, os.F_OK):
-                alembic_config = self.get_alembic_config(name)
-                heads = command.ScriptDirectory.from_config(alembic_config).get_heads()
+        for metadata, engine in Session.metadatas.items():
+            if self.version_check:
+                heads = get_heads(metadata.name, self)
+                if heads is not None:
+                    current_revision = get_current_revision(engine)
 
-                with self.get_engine(name).connect() as connection:
-                    migration_context = migration.MigrationContext.configure(connection)
-                    current_revision = migration_context.get_current_revision()
-
-                if current_revision is None:
-                    msg = 'Database version missing'
-                elif current_revision not in heads:
-                    msg = 'Database version not a revisions head'
-                else:
-                    msg = None
-
-                if msg:
-                    if self.version_validation:
-                        raise InvalidVersion(msg)
+                    if current_revision is None:
+                        msg = 'Database version missing'
+                    elif current_revision not in heads:
+                        msg = 'Database version is not a revisions head'
                     else:
-                        self.logger.error(msg)
+                        msg = None
 
-    def create_all(self):
-        for metadata in self.metadatas.values():
-            metadata.create_all()
+                    if msg:
+                        if self.version_validation:
+                            raise InvalidVersion(msg)
+                        else:
+                            self.logger.error(msg)
 
-    def drop_all(self):
-        for metadata in self.metadatas.values():
-            engine = metadata.bind
+    def create_all(self, db):
+        for metadata in self.metadatas:
+            if (db is None) or (db == metadata.name):
+                engine = self.get_engine(metadata)
+                metadata.create_all(engine)
 
-            alembic = migration.MigrationContext.configure(url=engine.url)
-            alembic._version.drop(engine.connect(), checkfirst=True)
+    def drop_all(self, db):
+        for metadata in self.metadatas:
+            if (db is None) or (db == metadata.name):
+                engine = self.get_engine(metadata)
+                drop_version(engine)
+                metadata.drop_all(engine)
 
-            metadata.drop_all()
-
-    def populate_all(self, app, services_service):
-        for populate in self.populates:
-            services_service(populate, app)
+    def populate_all(self, db, app, services_service):
+        for db in [db] if db is not None else self.populates:
+            services_service(self.populates[db], app)

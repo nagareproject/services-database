@@ -10,9 +10,9 @@
 import os
 import csv
 
-from sqlalchemy import create_engine, Unicode
-from nagare.database import metadata, session, configure_mappers
-from nagare.database.declarative import Entity, Field, OneToMany, ManyToOne
+from sqlalchemy import Unicode
+from nagare.database import metadata, session, configure_mappers, configure_database
+from nagare.database import Entity, Field, OneToMany, ManyToOne
 
 
 class Language(Entity):
@@ -36,8 +36,8 @@ configure_mappers(list)
 
 
 def setup_function(_):
-    metadata.bind = create_engine('sqlite://', echo=False)
-    metadata.create_all()
+    engine = configure_database('sqlite://')
+    metadata.create_all(engine)
 
 
 def test_1():

@@ -16,29 +16,34 @@ class Commands(command.Commands):
 
 
 class Create(command.Command):
-    DESC = 'create all database tables'
+    DESC = 'create database tables'
     WITH_STARTED_SERVICES = True
 
     def set_arguments(self, parser):
         super(Create, self).set_arguments(parser)
 
+        parser.add_argument('--db', help='database')
         parser.add_argument('--drop', action='store_true', help='drop the database tables before to re-create them')
 
     @staticmethod
-    def run(database_service, application_service, services_service, drop=False):
+    def run(database_service, application_service, services_service, db, drop):
         with transaction.manager:
             if drop:
-                database_service.drop_all()
+                database_service.drop_all(db)
 
-            database_service.create_all()
-            database_service.populate_all(application_service.service, services_service)
+            database_service.create_all(db)
+            database_service.populate_all(db, application_service.service, services_service)
 
 
 class Drop(command.Command):
     DESC = 'drop all database tables'
     WITH_STARTED_SERVICES = True
 
+    def set_arguments(self, parser):
+        super(Drop, self).set_arguments(parser)
+        parser.add_argument('--db', help='database')
+
     @staticmethod
-    def run(database_service):
+    def run(database_service, db):
         with transaction.manager:
-            database_service.drop_all()
+            database_service.drop_all(db)
