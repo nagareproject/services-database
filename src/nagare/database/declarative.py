@@ -318,88 +318,92 @@ class _NagareEntity(object):
         return orm.object_session(self).expunge(self, *args, **kw)
 
     @classmethod
+    def session_query(cls):
+        return cls.session.query(cls)
+
+    @classmethod
     def subquery(cls, name=None, with_labels=False, reduce_columns=False):
         return cls.query.subquery(name, with_labels, reduce_columns)
 
     @classmethod
     def count(cls):
-        return cls.query.count()
+        return cls.session_query().count()
 
     @classmethod
     def all(cls):
-        return cls.query.all()
+        return cls.session_query().all()
 
     @classmethod
     def first(cls):
-        return cls.query.first()
+        return cls.session_query().first()
 
     @classmethod
     def get(cls, ident):
-        return cls.query.get(ident)
+        return cls.session.get(cls, ident)
 
     @classmethod
     def get_by(cls, **kw):
-        return cls.filter_by(**kw).first()
+        return cls.session_query().filter_by(**kw).first()
 
     @classmethod
     def single_by(cls, **kw):
-        return cls.filter_by(**kw).one_or_none()
+        return cls.session_query().filter_by(**kw).one_or_none()
 
     @classmethod
     def one_by(cls, **kw):
-        return cls.filter_by(**kw).one()
+        return cls.session_query().filter_by(**kw).one()
 
     @classmethod
     def filter(cls, *criterion):
-        return cls.query.filter(*criterion)
+        return cls.session_query().filter(*criterion)
 
     @classmethod
     def filter_by(cls, **kw):
-        return cls.query.filter_by(**kw)
+        return cls.session_query().filter_by(**kw)
 
     @classmethod
     def exists(cls, **kw):
-        return cls.query.filter(cls.query.filter_by(**kw).exists()).count()
+        return cls.session.query(cls.session_query().filter_by(**kw).exists()).scalar()
 
     @classmethod
     def join(cls, *tables):
-        return cls.query.join(*tables)
+        return cls.session_query().join(*tables)
 
     @classmethod
     def outerjoin(cls, target, *props, **kwargs):
-        return cls.query.outerjoin(target, *props, **kwargs)
+        return cls.session_query().outerjoin(target, *props, **kwargs)
 
     @classmethod
     def distinct(cls, *expr):
-        return cls.query.distinct(*expr)
+        return cls.session_query().distinct(*expr)
 
     @classmethod
     def group_by(cls, *clauses):
-        return cls.query.group_by(*clauses)
+        return cls.session_query().group_by(*clauses)
 
     @classmethod
     def order_by(cls, *clauses):
-        return cls.query.order_by(*clauses)
+        return cls.session_query().order_by(*clauses)
 
     @classmethod
     def having(cls, criterion):
-        return cls.query.having(criterion)
+        return cls.session_query().having(criterion)
 
     @classmethod
     def limit(cls, nb):
-        return cls.query.limit(nb)
+        return cls.session_query().limit(nb)
 
     @classmethod
     def offset(cls, nb):
-        return cls.query.offset(nb)
+        return cls.session_query().offset(nb)
 
     @classmethod
     def union(cls, *q):
-        return cls.query.union(*q)
+        return cls.session_query().union(*q)
 
     @classmethod
     def where(cls, *criterion):
-        return cls.query.where(*criterion)
+        return cls.session_query().where(*criterion)
 
 
 # -----------------------------------------------------------------------------

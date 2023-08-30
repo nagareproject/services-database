@@ -93,6 +93,7 @@ def configure_mappers(collections_class=set, inverse_foreign_keys=False):
         classes.append(cls)
         for key, value in list(cls.__dict__.items()):
             if isinstance(value, FKRelationshipBase):
+                delattr(cls, key)
                 value.config(cls, key, collections_class, inverse_foreign_keys)
 
     orm.configure_mappers()
