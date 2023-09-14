@@ -27,8 +27,8 @@ from .database_exceptions import InvalidVersion
 class Session(orm.Session):
     metadatas = {}
 
-    def get_bind(self, mapper, **kw):
-        metadata = get_metadata(mapper.class_)
+    def get_bind(self, mapper=None, **kw):
+        metadata = get_metadata(mapper.class_) if mapper is not None else None
 
         return self.metadatas[metadata] if metadata is not None else super().get_bind(mapper, **kw)
 
@@ -124,7 +124,7 @@ class Database(plugin.Plugin):
             'populate': 'string(default="nagare.services.database:default_populate")',
         },
         upgrade={
-            'file_template': 'string(default=None)',
+            'file_template': 'string(default="%(year)d%(month).2d%(day).2d_%(rev)s_%(slug)s")',
             'timezone': 'string(default=None)',
             'truncate_slug_length': 'integer(default=None)',
             'revision_environment': 'boolean(default=None)',
