@@ -1,7 +1,7 @@
 # Encoding: utf-8
 
 # --
-# Copyright (c) 2008-2023 Net-ng.
+# Copyright (c) 2008-2024 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -10,16 +10,16 @@
 # --
 
 from nagare.services.database import (
-    configure_database,
-    configure_mappers,
+    query,
+    session,
+    metadata,
     get_engine,
     get_metadata,
     get_metadatas,
-    metadata,
-    query,
-    session,
+    configure_mappers,
+    configure_database,
 )
 from nagare.services.database_exceptions import InvalidVersion
 
-from .declarative import Entity, Field, ManyToMany, ManyToOne, OneToMany, OneToOne
 from .pickle import NonSerializable
+from .declarative import Field, Entity, OneToOne, ManyToOne, OneToMany, ManyToMany

@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2023 Net-ng.
+# Copyright (c) 2008-2024 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -7,9 +7,10 @@
 # this distribution.
 # --
 
-from nagare.services import database
+from sqlalchemy import Table, Integer, ForeignKey, orm
 from sqlalchemy import Column as Field
-from sqlalchemy import ForeignKey, Integer, Table, orm
+
+from nagare.services import database
 
 
 class FKRelationship(database.FKRelationshipBase):
@@ -272,7 +273,7 @@ class EntityMeta(database.EntityMetaBase):
         ns['using_options'] = {'shortname': shortname, 'auto_primarykey': auto_primarykey, 'auto_add': auto_add}
 
         if auto_primarykey:
-            primary_key_name = auto_primarykey if isinstance(auto_primarykey, (str, type(u''))) else 'id'
+            primary_key_name = auto_primarykey if isinstance(auto_primarykey, (str, type(''))) else 'id'
             ns[primary_key_name] = Field(Integer, primary_key=True)
 
     @staticmethod

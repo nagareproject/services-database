@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2023 Net-ng.
+# Copyright (c) 2008-2024 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -7,8 +7,9 @@
 # this distribution.
 # --
 
-from nagare.admin import command
 import transaction
+
+from nagare.admin import command
 
 
 class Commands(command.Commands):

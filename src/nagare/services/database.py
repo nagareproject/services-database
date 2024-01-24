@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2023 Net-ng.
+# Copyright (c) 2008-2024 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -14,12 +14,13 @@ try:
 except ImportError:
     import urllib.parse as urlparse
 
-from nagare.admin.alembic_commands import drop_version, get_current_revision, get_heads
+import zope.sqlalchemy
+from sqlalchemy import MetaData, orm, event, engine_from_config
+from sqlalchemy.ext import declarative
+
 from nagare.server import reference
 from nagare.services import plugin
-from sqlalchemy import MetaData, engine_from_config, event, orm
-from sqlalchemy.ext import declarative
-import zope.sqlalchemy
+from nagare.admin.alembic_commands import get_heads, drop_version, get_current_revision
 
 from .database_exceptions import InvalidVersion
 

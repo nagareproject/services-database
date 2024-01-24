@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2023 Net-ng.
+# Copyright (c) 2008-2024 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -15,9 +15,10 @@ except ImportError:
     from configparser import RawConfigParser
 
 
-from alembic import command as alembic_command
 from alembic import config as alembic_config
+from alembic import command as alembic_command
 from alembic import migration
+
 from nagare import commands
 from nagare.admin import command
 
