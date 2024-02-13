@@ -79,10 +79,9 @@ def entity_setstate(entity, d):
 
 @event.listens_for(orm.Mapper, 'instrument_class')
 def add_pickle_hooks(mapper, cls):
-    # Dynamically add a ``__getstate__()`` and ``__setstate__()`` method
-    # to the SQLAlchemy entities
-    if not hasattr(cls, '__getstate__'):
+    # Dynamically add a ``__getstate__()`` and ``__setstate__()`` methods to the SQLAlchemy entities
+    if not hasattr(cls, '__getstate__') or (cls.__getstate__ is object.__getstate__):
         cls.__getstate__ = entity_getstate
 
-    if not hasattr(cls, '__setstate__'):
+    if not hasattr(cls, '__setstate__') or (cls.__setstate__ is object.__setstate__):
         cls.__setstate__ = entity_setstate
