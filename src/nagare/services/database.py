@@ -52,13 +52,27 @@ metadata = MetaData()
 
 
 def configure_database(
-    uri, name=None, metadata=metadata, debug=False, json_serializer=None, json_deserializer=None, **config
+    uri,
+    name=None,
+    metadata=metadata,
+    debug=False,
+    json_serializer=None,
+    json_deserializer=None,
+    after_create=None,
+    before_drop=None,
+    **config,
 ):
     if not isinstance(metadata, MetaData):
         metadata = reference.load_object(metadata)[0]
 
     if name is not None:
         metadata.name = name
+
+    if after_create:
+        event.listen(metadata, 'after_create', reference.load_object(after_create)[0])
+
+    if before_drop:
+        event.listen(metadata, 'before_drop', reference.load_object(before_drop)[0])
 
     dialect, _, _ = urlparse.urlparse(uri).scheme.partition('+')
     if dialect == 'postgres':
@@ -123,6 +137,8 @@ class Database(plugin.Plugin):
             'json_deserializer': 'string(default=None)',
             'metadata': 'string(default="nagare.database:metadata")',  # Database metadata: entities description
             'populate': 'string(default="nagare.services.database:default_populate")',
+            'after_create': 'string(default=None)',
+            'before_drop': 'string(default=None)',
         },
         upgrade={
             'file_template': 'string(default="%(year)d%(month).2d%(day).2d_%(rev)s_%(slug)s")',
