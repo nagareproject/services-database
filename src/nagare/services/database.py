@@ -150,6 +150,9 @@ class Database(plugin.Plugin):
             'version_check': 'boolean(default=None)',
             'version_validation': 'boolean(default=True)',
         },
+        cli={
+            'activated': 'boolean(default=False)',
+        },
     )
 
     def __init__(self, name, dist, collections_class, inverse_foreign_keys, upgrade, reloader_service=None, **configs):

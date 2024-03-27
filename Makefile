@@ -1,5 +1,3 @@
-DOC_OUTPUT_DIR ?= doc/_build
-
 .PHONY: doc tests
 
 clean:
@@ -29,7 +27,7 @@ qa-fix:
 	python -m ruff format src
 
 doc:
-	python -m sphinx.cmd.build -b html doc ${DOC_OUTPUT_DIR}
+	python -m sphinx.cmd.build -b html doc doc/_build
 
 wheel:
 	python -m pip wheel -w dist --no-deps .
