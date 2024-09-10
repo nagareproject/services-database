@@ -55,6 +55,8 @@ def configure_database(
     uri,
     name=None,
     metadata=metadata,
+    autoremap=False,
+    autoremap_only=None,
     debug=False,
     json_serializer=None,
     json_deserializer=None,
@@ -81,6 +83,9 @@ def configure_database(
         config['json_deserializer'] = reference.load_object(json_deserializer)[0]
 
     Session.metadatas[metadata] = engine = engine_from_config(config, '', echo=debug, url=uri, future=True)
+
+    if autoremap:
+        metadata.reflect(engine, only=autoremap_only)
 
     return engine
 
@@ -122,12 +127,15 @@ class Database(plugin.Plugin):
         collections_class='string(default=set)',
         inverse_foreign_keys='boolean(default=False)',
         __many__={  # Database sub-sections
+            '_database_section_': 'boolean(default=True)',
             'activated': 'boolean(default=True)',
             'uri': 'string(help="Database connection string")',
             'debug': 'boolean(default=False)',  # Set the database engine in debug mode?
             'session': 'string(default="nagare.database:session")',
             'autoflush': 'boolean(default=True)',
             'autocommit': 'boolean(default=False)',
+            'autoremap': 'boolean(default=False)',
+            'autoremap_only': 'string_list(default=None)',
             'expire_on_commit': 'boolean(default=True)',
             'twophases': 'boolean(default=False)',
             'json_serializer': 'string(default=None)',
@@ -150,9 +158,8 @@ class Database(plugin.Plugin):
             'version_check': 'boolean(default=None)',
             'version_validation': 'boolean(default=True)',
         },
-        cli={
-            'activated': 'boolean(default=False)',
-        },
+        ide={'_database_section_': 'boolean(default=False)'},
+        cli={'_database_section_': 'boolean(default=False)'},
     )
 
     def __init__(self, name, dist, collections_class, inverse_foreign_keys, upgrade, reloader_service=None, **configs):
@@ -204,7 +211,7 @@ class Database(plugin.Plugin):
 
     def handle_start(self, app):
         for name, config in self.configs.items():
-            if isinstance(config, dict) and config.pop('activated'):
+            if isinstance(config, dict) and config.pop('_database_section_', False) and config.pop('activated'):
                 populate = config.pop('populate')
                 self.populates[name] = reference.load_object(populate)[0]
 
