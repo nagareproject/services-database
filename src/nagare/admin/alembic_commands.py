@@ -87,7 +87,7 @@ class AlembicBaseCommand(command.Command):
 
 
 class AlembicCommand(AlembicBaseCommand):
-    def run(self, database_service, db, **params):
+    def run(self, db, database_service, services_service, **params):
         metadatas = {metadata.name: metadata for metadata in database_service.metadatas}
 
         if not db:
@@ -101,7 +101,12 @@ class AlembicCommand(AlembicBaseCommand):
         return super(AlembicCommand, self).run(
             db,
             False,
-            {'db': db, 'metadata': metadata, 'engine': database_service.get_engine(metadata)},
+            {
+                'db': db,
+                'metadata': metadata,
+                'engine': database_service.get_engine(metadata),
+                'services': services_service,
+            },
             database_service,
             **params,
         )
