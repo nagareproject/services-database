@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2024 Net-ng.
+# Copyright (c) 2008-2025 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -10,6 +10,7 @@
 from sqlalchemy import Table, Integer, ForeignKey, orm
 from sqlalchemy import Column as Field
 
+from nagare import log
 from nagare.services import database
 
 
@@ -242,7 +243,7 @@ class EntityMeta(database.EntityMetaBase):
         options = ns.pop('using_options', {})
 
         if bases and (bases[0].__name__ != '_NagareEntity'):
-            meta.update_ns(ns, **options)
+            meta.update_ns(name, ns, **options)
 
         cls = super(EntityMeta, meta).__new__(meta, name, bases, ns)
 
@@ -267,14 +268,24 @@ class EntityMeta(database.EntityMetaBase):
         del cls.__relationships_params__
 
     @staticmethod
-    def update_ns(ns, metadata=None, session=None, shortname=False, auto_primarykey=True, auto_add=True, **options):
+    def update_ns(
+        entity_name, ns, metadata=None, session=None, shortname=False, auto_primarykey=True, auto_add=True, **options
+    ):
         ns['metadata'] = metadata or database.metadata
         ns['session'] = session or database.session
         ns['using_options'] = {'shortname': shortname, 'auto_primarykey': auto_primarykey, 'auto_add': auto_add}
 
         if auto_primarykey:
             primary_key_name = auto_primarykey if isinstance(auto_primarykey, (str, type(''))) else 'id'
-            ns[primary_key_name] = Field(Integer, primary_key=True)
+            if primary_key_name in ns:
+                log.warning(
+                    'Primary key `%(key)s` already defined in entity `%(entity)s`.'
+                    ' A primary key will not be created by Nagare.'
+                    " Add 'using_options = {'auto_primarykey': False}` in entity `%(entity)s` to disable this warning",
+                    {'entity': entity_name, 'key': primary_key_name},
+                )
+            else:
+                ns[primary_key_name] = Field(Integer, primary_key=True)
 
     @staticmethod
     def set_tablename(cls, tablename=None, shortname=False, **options):
