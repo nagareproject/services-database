@@ -21,7 +21,7 @@ class Create(command.Command):
     WITH_STARTED_SERVICES = True
 
     def set_arguments(self, parser):
-        super(Create, self).set_arguments(parser)
+        super().set_arguments(parser)
 
         parser.add_argument('--db', help='database')
         parser.add_argument('--drop', action='store_true', help='drop the database tables before to re-create them')
@@ -41,7 +41,7 @@ class Drop(command.Command):
     WITH_STARTED_SERVICES = True
 
     def set_arguments(self, parser):
-        super(Drop, self).set_arguments(parser)
+        super().set_arguments(parser)
         parser.add_argument('--db', help='database')
 
     @staticmethod

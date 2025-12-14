@@ -11,8 +11,17 @@ import os
 import csv
 
 from sqlalchemy import Unicode
-from nagare.database import metadata, session, configure_mappers, configure_database
-from nagare.database import Entity, Field, OneToMany, ManyToOne
+
+from nagare.database import (
+    Field,
+    Entity,
+    ManyToOne,
+    OneToMany,
+    session,
+    metadata,
+    configure_mappers,
+    configure_database,
+)
 
 
 class Language(Entity):
@@ -41,23 +50,23 @@ def setup_function(_):
 
 
 def test_1():
-    Language(id=u'english', label=u'hello world')
+    Language(id='english', label='hello world')
     session.flush()
 
     language = Language.all()[0]
-    assert language.id == u'english'
-    assert language.label == u'hello world'
+    assert language.id == 'english'
+    assert language.label == 'hello world'
 
-    Language(id=u'french', label=u'bonjour monde')
+    Language(id='french', label='bonjour monde')
     session.flush()
 
     language = Language.all()[1]
-    assert language.id == u'french'
-    assert language.label == u'bonjour monde'
+    assert language.id == 'french'
+    assert language.label == 'bonjour monde'
 
 
 def test_2():
-    """database - simple test with sqlalchemy/elixir unicode test"""
+    """Database - simple test with sqlalchemy/elixir unicode test."""
     file_path = os.path.join(os.path.dirname(__file__), 'helloworld.csv')
     try:
         f = open(file_path, 'r', encoding='utf-8')
@@ -67,9 +76,9 @@ def test_2():
 
     res = {}
     for lang, label in reader:
-        if not isinstance(lang, type(u'')):
+        if not isinstance(lang, type('')):
             lang = lang.decode('utf-8')
-        if not isinstance(label, type(u'')):
+        if not isinstance(label, type('')):
             label = label.decode('utf-8')
 
         res[lang] = label
@@ -81,11 +90,11 @@ def test_2():
 
 
 def test4():
-    """database - test children relation with sqlalchemy/elixir"""
-    f = Father(name=u'Father')
+    """Database - test children relation with sqlalchemy/elixir."""
+    f = Father(name='Father')
 
-    c1 = Child(name=u'Child1')
-    c2 = Child(name=u'Child2')
+    c1 = Child(name='Child1')
+    c2 = Child(name='Child2')
 
     f.children.append(c1)
     f.children.append(c2)

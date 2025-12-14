@@ -123,7 +123,7 @@ class OneToMany(FKRelationship):
         pk = list(local_cls.__table__.primary_key)[0]
         foreign_key, _ = self.create_foreign_field(target_rel_name, pk, target_cls, key)
 
-        return False, dict(local_cls.get_params_of_field(key), primaryjoin=foreign_key == pk)
+        return False, local_cls.get_params_of_field(key) | {'primaryjoin': foreign_key == pk}
 
 
 class ManyToOne(OneToMany):
@@ -133,10 +133,10 @@ class ManyToOne(OneToMany):
     INVERSE_RELATIONSHIP_NAME = ('OneToMany', 'OneToOne')
 
     def create_foreign_field(self, foreign_key_name, pk, target_cls, key):
-        return super(ManyToOne, self).create_foreign_field(key, pk, target_cls, key)
+        return super().create_foreign_field(key, pk, target_cls, key)
 
     def _config(self, inverse_foreign_keys, local_cls, target_cls, key, target_rel_name):
-        _, kw = super(ManyToOne, self)._config(inverse_foreign_keys, target_cls, local_cls, key, target_rel_name)
+        _, kw = super()._config(inverse_foreign_keys, target_cls, local_cls, key, target_rel_name)
         kw['uselist'] = False
 
         return True, kw
@@ -150,10 +150,10 @@ class OneToOne(OneToMany):
     FOREIGN_KEY_PARAMS = {'index': True, 'unique': True}
 
     def create_foreign_field(self, foreign_key_name, pk, target_cls, key, **kw):
-        return super(OneToOne, self).create_foreign_field(foreign_key_name, pk, target_cls, key, **kw)
+        return super().create_foreign_field(foreign_key_name, pk, target_cls, key, **kw)
 
     def _config(self, inverse_foreign_keys, local_cls, target_cls, key, target_rel_name, **kw):
-        _, kw = super(OneToOne, self)._config(inverse_foreign_keys, local_cls, target_cls, key, target_rel_name, **kw)
+        _, kw = super()._config(inverse_foreign_keys, local_cls, target_cls, key, target_rel_name, **kw)
         kw['uselist'] = False
 
         return False, kw
@@ -177,7 +177,7 @@ class ManyToMany(FKRelationship):
         collection_class=None,
         **kw,
     ):
-        super(ManyToMany, self).__init__(target, '', inverse, collection_class, **kw)
+        super().__init__(target, '', inverse, collection_class, **kw)
 
         self.tablename = tablename
         self.local_colname = local_colname
@@ -245,7 +245,7 @@ class EntityMeta(database.EntityMetaBase):
         if bases and (bases[0].__name__ != '_NagareEntity'):
             meta.update_ns(name, ns, **options)
 
-        cls = super(EntityMeta, meta).__new__(meta, name, bases, ns)
+        cls = super().__new__(meta, name, bases, ns)
 
         if bases and (bases[0].__name__ != '_NagareEntity'):
             meta.set_tablename(cls, **options)
@@ -276,7 +276,7 @@ class EntityMeta(database.EntityMetaBase):
         ns['using_options'] = {'shortname': shortname, 'auto_primarykey': auto_primarykey, 'auto_add': auto_add}
 
         if auto_primarykey:
-            primary_key_name = auto_primarykey if isinstance(auto_primarykey, (str, type(''))) else 'id'
+            primary_key_name = auto_primarykey if isinstance(auto_primarykey, str) else 'id'
             if primary_key_name in ns:
                 log.warning(
                     'Primary key `%(key)s` already defined in entity `%(entity)s`.'
@@ -300,7 +300,7 @@ class EntityMeta(database.EntityMetaBase):
             cls.__tablename__ = tablename
 
 
-class _NagareEntity(object):
+class _NagareEntity:
     declarative_constructor = getattr(orm.declarative_base().__init__, '__func__', orm.declarative_base().__init__)
 
     def __init__(self, auto_add=None, **kw):

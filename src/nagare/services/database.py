@@ -8,11 +8,7 @@
 # --
 
 import os
-
-try:
-    import urlparse
-except ImportError:
-    import urllib.parse as urlparse
+import urllib.parse as urlparse
 
 import zope.sqlalchemy
 from sqlalchemy import MetaData, orm, event, engine_from_config
@@ -94,7 +90,7 @@ class EntityMetaBase(declarative.DeclarativeMeta):
     pass
 
 
-class FKRelationshipBase(object):
+class FKRelationshipBase:
     pass
 
 
@@ -122,11 +118,10 @@ def configure_mappers(collections_class=set, inverse_foreign_keys=False):
 
 
 class Database(plugin.Plugin):
-    CONFIG_SPEC = dict(
-        plugin.Plugin.CONFIG_SPEC,
-        collections_class='string(default=set)',
-        inverse_foreign_keys='boolean(default=False)',
-        __many__={  # Database sub-sections
+    CONFIG_SPEC = plugin.Plugin.CONFIG_SPEC | {
+        'collections_class': 'string(default=set)',
+        'inverse_foreign_keys': 'boolean(default=False)',
+        '__many__': {  # Database sub-sections
             '_database_section_': 'boolean(default=True)',
             'activated': 'boolean(default=True)',
             'uri': 'string(help="Database connection string")',
@@ -147,7 +142,7 @@ class Database(plugin.Plugin):
             'before_drop': 'string(default=None)',
             'after_drop': 'string(default=None)',
         },
-        upgrade={
+        'upgrade': {
             'file_template': 'string(default="%(year)d%(month).2d%(day).2d_%(rev)s_%(slug)s")',
             'timezone': 'string(default=None)',
             'truncate_slug_length': 'integer(default=None)',
@@ -158,12 +153,12 @@ class Database(plugin.Plugin):
             'version_check': 'boolean(default=None)',
             'version_validation': 'boolean(default=True)',
         },
-        ide={'_database_section_': 'boolean(default=False)'},
-        cli={'_database_section_': 'boolean(default=False)'},
-    )
+        'ide': {'_database_section_': 'boolean(default=False)'},
+        'cli': {'_database_section_': 'boolean(default=False)'},
+    }
 
     def __init__(self, name, dist, collections_class, inverse_foreign_keys, upgrade, reloader_service=None, **configs):
-        super(Database, self).__init__(
+        super().__init__(
             name,
             dist,
             collections_class=collections_class,

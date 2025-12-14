@@ -1,5 +1,3 @@
-# Encoding: utf-8
-
 # --
 # Copyright (c) 2008-2025 Net-ng.
 # All rights reserved.
@@ -10,11 +8,18 @@
 # --
 
 import pytest
-
 from sqlalchemy import Text
 
-from nagare.database import configure_database, metadata, session, configure_mappers
-from nagare.database import Entity, Field, OneToMany, ManyToOne
+from nagare.database import (
+    Field,
+    Entity,
+    ManyToOne,
+    OneToMany,
+    session,
+    metadata,
+    configure_mappers,
+    configure_database,
+)
 
 
 class Parent1_1(Entity):

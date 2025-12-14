@@ -16,7 +16,7 @@ from sqlalchemy import orm, event
 from nagare.services import database
 
 
-class NonSerializable(object):
+class NonSerializable:
     def __reduce__(self):
         raise PicklingError("SQLAlchemy entity <{}> can't be serialized".format(self.__class__.__name__))
 

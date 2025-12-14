@@ -1,5 +1,3 @@
-# Encoding: utf-8
-
 # --
 # Copyright (c) 2008-2025 Net-ng.
 # All rights reserved.
@@ -10,11 +8,9 @@
 # --
 
 import pytest
-
 from sqlalchemy import Text
 
-from nagare.database import configure_database, metadata, session, configure_mappers
-from nagare.database import Entity, Field, ManyToMany
+from nagare.database import Field, Entity, ManyToMany, session, metadata, configure_mappers, configure_database
 
 
 class Movie3_1(Entity):
