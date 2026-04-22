@@ -1,5 +1,5 @@
 # --
-# Copyright (c) 2008-2025 Net-ng.
+# Copyright (c) 2014-2026 Net-ng.
 # All rights reserved.
 #
 # This software is licensed under the BSD License, as described in
@@ -76,9 +76,9 @@ def test_2():
 
     res = {}
     for lang, label in reader:
-        if not isinstance(lang, type('')):
+        if not isinstance(lang, str):
             lang = lang.decode('utf-8')
-        if not isinstance(label, type('')):
+        if not isinstance(label, str):
             label = label.decode('utf-8')
 
         res[lang] = label
