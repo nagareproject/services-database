@@ -59,22 +59,23 @@ def entity_setstate(entity, d):
     entity.__dict__.update(d)
 
     if key is not None:
-        # Fetch a new and initialized SQLAlchemy from the database
+        # Fetch a new and initialized SQLAlchemy entity from the database
         session = getattr(entity.__class__, 'session', database.session)
 
         x = session.query(entity.__class__).get(key)
-        session.expunge(x)
+        if x is not None:
+            session.expunge(x)
 
-        # Copy its state to our entity
-        entity.__dict__.update(x.__dict__)
+            # Copy its state to our entity
+            entity.__dict__.update(x.__dict__)
 
-        # Adjust the entity SQLAlchemy state
-        state = x._sa_instance_state.__getstate__()
-        state['instance'] = entity
-        entity._sa_instance_state.__setstate__(state)
+            # Adjust the entity SQLAlchemy state
+            state = x._sa_instance_state.__getstate__()
+            state['instance'] = entity
+            entity._sa_instance_state.__setstate__(state)
 
-        # Add the entity to the current database session
-        session.add(entity)
+            # Add the entity to the current database session
+            session.add(entity)
 
 
 @event.listens_for(orm.Mapper, 'instrument_class')

@@ -211,7 +211,7 @@ class Database(plugin.Plugin):
                 self.populates[name] = reference.load_object(populate)[0]
 
                 engine_config = self._configure_session(**config)
-                configure_database(name=name, **engine_config)
+                configure_database(name=name, **{k: v for k, v in engine_config.items() if not isinstance(v, dict)})
 
         configure_mappers(self.collections_class, self.inverse_foreign_keys)
 
